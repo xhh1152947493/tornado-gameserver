@@ -62,7 +62,7 @@ def main():
 	server = tornado.httpserver.HTTPServer(Application(), xheaders=True)
 	server.listen(options.port)
 
-	logger.info('webserver start on port:%d', options.port)
+	logger.info('webserver start on port:%d, is_debug:%s', options.port, config.IS_DEBUG)
 
 	signal.signal(signal.SIGTERM, sig_handler)  # kill -SIGTERM 1234 [kill -9不触发此信号]
 	signal.signal(signal.SIGINT, sig_handler)  # ctrl + c

@@ -10,6 +10,9 @@ from .base_handler import BaseHandler
 
 
 class WeChatLoginHandler(BaseHandler):
+	def prepare(self):
+		pass
+
 	def get(self):
 		return self._request()
 

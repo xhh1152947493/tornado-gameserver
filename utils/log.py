@@ -31,5 +31,10 @@ def _init_logger():
 	logger.addHandler(handler)
 	logger.setLevel(config.get_log_level())  # 设置可记录的日志等级
 
+	# 设置tornado的控制台输出也到log中
+	tornado_logger = logging.getLogger("tornado")
+	tornado_logger.addHandler(handler)
+	tornado_logger.setLevel(config.get_log_level())
+
 
 _init_logger()

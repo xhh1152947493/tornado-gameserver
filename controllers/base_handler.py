@@ -19,9 +19,6 @@ class BaseHandler(tornado.web.RequestHandler):
 		self.__sql_conn = None
 		self.__redis_conn = None
 
-	def prepare(self):
-		logger.debug("recv client request: %s", self.request.uri)
-
 	def share_db(self):
 		if self.__sql_conn:
 			return self.__sql_conn
