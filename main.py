@@ -10,14 +10,14 @@ from configs import config
 from utils.log import logger
 from tornado.options import define, options
 
-from controllers import login_handlers
+from controllers import h_login
 
 
 class Application(tornado.web.Application):
 	def __init__(self):
 		handlers = [
-			("/guestLogin", login_handlers.GuestLoginHandler),
-			("/wechatLogin", login_handlers.WeChatLoginHandler),
+			("/guestLogin", h_login.CGuestLoginHandler),
+			# ("/wechatLogin", h_login.CWeChatLoginHandler),
 		]
 
 		settings = dict(

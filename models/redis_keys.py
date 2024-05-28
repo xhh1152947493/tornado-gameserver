@@ -7,4 +7,4 @@ def keys_guid():
 
 # 玩家游戏数据
 def keys_player_game(pid):
-	return f"player_game_info:{pid}"
+	return f"player_game:{pid}"

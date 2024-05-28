@@ -17,6 +17,10 @@ if __name__ == '__main__':
 
 	url = "http://localhost:8194/guestLogin"
 
+	# params = {
+	# 	"params": "dasdas", # 非法json
+	# }
+
 	for i in range(10):
 		params = {
 			"params": utils.json_encode({  # 序列化的json字符串

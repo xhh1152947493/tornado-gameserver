@@ -8,9 +8,10 @@ from models import db_sql
 from models import db_redis
 from configs import error
 from utils import utils
+from utils.log import logger
 
 
-class BaseHandler(tornado.web.RequestHandler):
+class CBaseHandler(tornado.web.RequestHandler):
 	def __init__(self, application, request, **kwargs):
 		tornado.web.RequestHandler.__init__(self, application, request, **kwargs)
 		self.uid = 0
@@ -56,7 +57,10 @@ class BaseHandler(tornado.web.RequestHandler):
 		org_params = self.get_string('params')
 		if not org_params:
 			return None
-		return utils.json_decode(org_params)
+		rlt, err = utils.json_decode(org_params)
+		if err:
+			logger.error("decode json params failed. data:%s err:%s", org_params, err)
+		return rlt
 
 	# 回答客户端
 	def write_json(self, code, data=None):

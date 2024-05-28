@@ -52,10 +52,9 @@ def json_decode(data):
 		if isinstance(data, bytes):
 			data = data.decode('utf8')
 		py_ret = json.loads(data)
-		return py_ret
-	except Exception as exp:
-		log(str(exp) + ': ' + str(data), 'jsondecode.log')
-		return None
+		return py_ret, None
+	except Exception as err:
+		return None, err
 
 
 def json_encode(data):
