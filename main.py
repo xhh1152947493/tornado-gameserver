@@ -16,6 +16,7 @@ from controllers import login_handlers
 class Application(tornado.web.Application):
 	def __init__(self):
 		handlers = [
+			("/guestLogin", login_handlers.GuestLoginHandler),
 			("/wechatLogin", login_handlers.WeChatLoginHandler),
 		]
 

@@ -55,7 +55,7 @@ def json_decode(data):
 		return py_ret
 	except Exception as exp:
 		log(str(exp) + ': ' + str(data), 'jsondecode.log')
-		return []
+		return None
 
 
 def json_encode(data):

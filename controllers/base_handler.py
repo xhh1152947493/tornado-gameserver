@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import tornado
+import tornado.web
 import sys
 
-from models import database
-from models import base_redis
+from models import db_sql
+from models import db_redis
 from configs import error
-from utils.log import logger
-
-import tornado.web
+from utils import utils
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -16,26 +15,30 @@ class BaseHandler(tornado.web.RequestHandler):
 		tornado.web.RequestHandler.__init__(self, application, request, **kwargs)
 		self.uid = 0
 		self.platform = 0
-		self.__sql_conn = None
+		self.__conn = None
 		self.__redis_conn = None
 
 	def share_db(self):
-		if self.__sql_conn:
-			return self.__sql_conn
-		conn = database.connect("db_sql")
+		if self.__conn:
+			return self.__conn
+		conn = db_sql.connect("db_sql")
 		if not conn:
 			return None
-		self.__sql_conn = conn
+		self.__conn = conn
 		return conn
 
 	def share_redis(self):
 		if self.__redis_conn:
 			return self.__redis_conn
-		conn = base_redis.share_connect()
+		conn = db_redis.share_connect()
 		if not conn:
 			return None
 		self.__redis_conn = conn
 		return conn
+
+	# 对象销毁时会自动调用db.close(),这里无需再显示调用了
+	def on_finish(self):
+		pass
 
 	# 获得整型参数
 	def get_int(self, name):
@@ -49,9 +52,15 @@ class BaseHandler(tornado.web.RequestHandler):
 	def get_string(self, name):
 		return self.get_argument(name, '')
 
+	def decode_params(self):
+		org_params = self.get_string('params')
+		if not org_params:
+			return None
+		return utils.json_decode(org_params)
+
 	# 回答客户端
 	def write_json(self, code, data=None):
-		# 如果有报错的话,把报错调用的地方返回给客户端
+		# 如果有错误的话,把报错调用的地方返回给客户端
 		fr = sys._getframe(1)
 		desc = f"{fr.f_code.co_name}:{fr.f_lineno}" if code != error.OK else ""
 		self.write({'code': code, 'err_info': desc, 'data': data or []})

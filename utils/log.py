@@ -8,7 +8,7 @@ from configs import config, const
 
 _main_log_name = "__main__"
 _main_file_name = "main.log"
-_max_bytes = 1024 * 1024 * 5
+_max_bytes = 1024 * 1024 * 5  # 5MB
 _back_up_count = 50
 _format = '%(asctime)-15s %(levelname)s %(message)s'
 
