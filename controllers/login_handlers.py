@@ -2,11 +2,18 @@
 
 import tornado.web
 
-from configs import error
+from configs import error, const
 from utils import utils
 from tornado.options import options
 
 from .base_handler import BaseHandler
+from models import m_login, redis_keys
+
+
+def gen_uid(conn_redis):
+	if not conn_redis:
+		return 0
+	return const.INIT_UID + conn_redis.incr(redis_keys.keys_guid())
 
 
 class GuestLoginHandler(BaseHandler):
@@ -22,7 +29,37 @@ class GuestLoginHandler(BaseHandler):
 	def _request(self):
 		params = self.decode_params()
 		if not params:
-			return self.write_json(error.DATA_BROKEN)
+			return self.write_json(error.ILLEGAL_PARAMS)
+		imei = params.get('imei')
+		if not imei or not isinstance(imei, str):
+			return self.write_json(error.ILLEGAL_PARAMS)
+
+		return self._login_by_guest(imei)
+
+	def _new_user_login(self, conn, conn_redis, imei):
+		uid = gen_uid(conn_redis)
+		if not m_login.insert_new_user(conn, uid, imei):
+			return self.write_json(error.DB_OPERATE_ERR)
+
+		return self.write_json(error.OK)
+
+	def _login_by_guest(self, imei):
+		conn = self.share_db()
+		if not conn:
+			return self.write_json(error.DB_CONNECT_ERR)
+		conn_redis = self.share_redis()
+		if not conn_redis:
+			return self.write_json(error.DB_CONNECT_ERR)
+
+		uid = m_login.get_uid_by_imei(conn, imei)
+		if not uid:  # 新角色登录流程
+			return self._new_user_login(conn, conn_redis, imei)
+
+		bs = conn_redis.get(redis_keys.keys_player_game(uid))
+		if not bs:
+			return self.write_json(error.DATA_NOT_FOUND)
+
+		return self.write_json(error.OK, bs)
 
 
 class WeChatLoginHandler(BaseHandler):
@@ -59,7 +96,7 @@ class WeChatLoginHandler(BaseHandler):
 	def _request(self):
 		params = self.decode_params()
 		if not params or (not params.get('imei') and not params.get('mac')):
-			return self.write_json(error.DATA_BROKEN)
+			return self.write_json(error.ILLEGAL_PARAMS)
 
 		if params.get('code'):
 			return self.__login_by_code(params.get('code'))
@@ -67,4 +104,4 @@ class WeChatLoginHandler(BaseHandler):
 		if params.get('auto_token'):
 			return self.__login_by_auto_token(params.get('auto_token'))
 
-		return self.write_json(error.DATA_BROKEN)
+		return self.write_json(error.ILLEGAL_PARAMS)

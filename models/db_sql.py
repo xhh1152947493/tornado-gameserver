@@ -77,3 +77,23 @@ def make_insert(table_name, params):
 	sql = "INSERT INTO `{0}` SET " + ",".join(insert_list)
 	sql = sql.format(table_name)
 	return sql
+
+
+def make_update(table_name, params, condition):
+	update_list = []
+	for k, v in params.items():
+		update_list.append("`{0}`='{1}'".format(k, v))
+	update_str = ", ".join(update_list)
+	sql = "UPDATE `{0}` SET {1} WHERE {2}".format(table_name, update_str, condition)
+	return sql
+
+
+def make_query(table_name, fileds, condition):
+	query_str = ", ".join([f"`{field}`" for field in fileds])
+	sql = "SELECT {0} FROM `{1}` WHERE {2}".format(query_str, table_name, condition)
+	return sql
+
+
+def make_delete(table_name, condition):
+	sql = "DELETE FROM `{0}` WHERE {1}".format(table_name, condition)
+	return sql

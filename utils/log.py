@@ -24,7 +24,7 @@ def _init_logger():
 
 	# 实例化handler
 	handler = logging.handlers.RotatingFileHandler(const.LOG_PATH + _main_file_name, mode="aw+",
-	                                               maxBytes=_max_bytes, backupCount=_back_up_count)
+	                                               maxBytes=_max_bytes, backupCount=_back_up_count, encoding="utf-8")
 	formatter = logging.Formatter(_format)  # 实例化formatter
 	handler.setFormatter(formatter)  # 为handler添加formatter
 
