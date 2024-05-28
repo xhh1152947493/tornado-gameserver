@@ -25,7 +25,7 @@ def write(content, filename):
 	return True
 
 
-def log(obj, filename):  # 写日志文件
+def log(filename, obj):  # 写日志文件
 	try:
 		f = open(const.ROOT_PATH + filename, 'a')
 		f.write(time_mdh() + str(obj) + "\n")
