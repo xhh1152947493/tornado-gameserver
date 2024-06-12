@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import urllib.parse
+
 from utils import utils
 
 if __name__ == '__main__':
 	import requests
 
-	url = "http://localhost:8194/wechatLogin"
+	url = "http://localhost:8194/wxLogin"
 
 	params = {
 		"params": utils.json_encode({  # 序列化的json字符串
@@ -12,8 +14,12 @@ if __name__ == '__main__':
 			'name': "t",
 			'imei': 123456,
 			'mac': 0x12311,
+			'code': "abccc"
 		}),
 	}
+
+	s = "params=" + urllib.parse.quote_plus(params["params"]) + "&key=2024CFD4-B5B1-4468-9ACE-60C3C6667B22"
+	params["sign"] = utils.md5(s)
 
 	response = requests.get(url, params=params)
 

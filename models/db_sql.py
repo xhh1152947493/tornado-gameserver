@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-import pymysql
+
+from pymysql.converters import escape_string
 
 from configs import config
 from utils.torndb import Connection, Row
 from utils import utils
+from utils.log import log
 
 
 # 连接数据库
@@ -43,7 +45,7 @@ def escape(data):
 		return int(data)
 	if not data:
 		return ''
-	return pymysql.escape_string(data)
+	return escape_string(data)
 
 
 def is_string(data):
@@ -73,7 +75,7 @@ def dict_to_row(dict_obj):
 def make_insert(table_name, params):
 	insert_list = []
 	for k, v in params.items():
-		insert_list.append("`{0}`='{1}'".format(k, v))
+		insert_list.append(r"`{0}`='{1}'".format(k, v))
 	sql = "INSERT INTO `{0}` SET " + ",".join(insert_list)
 	sql = sql.format(table_name)
 	return sql
@@ -82,7 +84,7 @@ def make_insert(table_name, params):
 def make_update(table_name, params, condition):
 	update_list = []
 	for k, v in params.items():
-		update_list.append("`{0}`='{1}'".format(k, v))
+		update_list.append(r"`{0}`='{1}'".format(k, v))
 	update_str = ", ".join(update_list)
 	sql = "UPDATE `{0}` SET {1} WHERE {2}".format(table_name, update_str, condition)
 	return sql
@@ -97,3 +99,21 @@ def make_query(table_name, fileds, condition):
 def make_delete(table_name, condition):
 	sql = "DELETE FROM `{0}` WHERE {1}".format(table_name, condition)
 	return sql
+
+
+def try_get(conn, sql):
+	try:
+		rlt = conn.get(sql)
+		return rlt
+	except Exception as e:
+		log.error("execute sql failed, err:%s\nsql:%s", e, sql)
+		return None
+
+
+def try_execute(conn, sql):
+	try:
+		rlt = conn.execute_rowcount(sql)
+		return rlt
+	except Exception as e:
+		log.error("execute sql failed, err:%s\nsql:%s", e, sql)
+		return None

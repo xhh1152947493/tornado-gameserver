@@ -7,17 +7,16 @@ import tornado.httpserver
 import tornado.web
 
 from configs import config
-from utils.log import logger
+from utils.log import log
 from tornado.options import define, options
 
-from controllers import h_login
+from controllers.handle_login import CWxLoginHandler
 
 
 class Application(tornado.web.Application):
 	def __init__(self):
 		handlers = [
-			("/guestLogin", h_login.CGuestLoginHandler),
-			# ("/wechatLogin", h_login.CWeChatLoginHandler),
+			("/wxLogin", CWxLoginHandler),
 		]
 
 		settings = dict(
@@ -32,21 +31,27 @@ class Application(tornado.web.Application):
 server = None  # Web Server 实例
 
 
+def _signal(*sig):
+	for s in sig:
+		signal.signal(s, sig_handler)
+		log.info('register signal:%s', s)
+
+
 def sig_handler(sig, frame):
-	logger.warning('Caught signal: %s', sig)
+	log.warning('caught signal:%s', sig)
 	tornado.ioloop.IOLoop.instance().add_callback(shutdown)
 
 
 def shutdown():
-	logger.info('Stopping HTTP server')
-	server.stop()
+	log.warning('stopping http server')
+	server.stop()  # 拒绝新请求
 
-	logger.info('Will shutdown in %s seconds...', config.SHUTDOWN_WAIT_SECONDS)
+	log.warning('will shutdown in %s seconds...', config.SHUTDOWN_WAIT_SECONDS)
 	io_loop = tornado.ioloop.IOLoop.instance()
 
 	def final_shutdown():
 		io_loop.stop()
-		logger.info('Shutdown complete')
+		log.warning('shutdown complete')
 
 	# 关闭进程前确保剩余消息都执行完了
 	io_loop.call_later(config.SHUTDOWN_WAIT_SECONDS, final_shutdown)
@@ -55,7 +60,7 @@ def shutdown():
 define("port", default=8194, help="web server run on the given port", type=int)
 
 
-def main():
+def bootstrap():
 	global server
 
 	tornado.options.parse_command_line()  # 解析命令行参数
@@ -63,16 +68,15 @@ def main():
 	server = tornado.httpserver.HTTPServer(Application(), xheaders=True)
 	server.listen(options.port)
 
-	logger.info('webserver start on port:%d, is_debug:%s', options.port, config.IS_DEBUG)
+	log.info('webserver start on port:%d, is_debug:%s', options.port, config.IS_DEBUG)
 
-	signal.signal(signal.SIGTERM, sig_handler)  # kill -SIGTERM 1234 [kill -9不触发此信号]
-	signal.signal(signal.SIGINT, sig_handler)  # ctrl + c
+	_signal(signal.SIGTERM, signal.SIGINT)  # kill -SIGTERM 1234 [kill -9不触发此信号] | ctrl + c
 
 	tornado.ioloop.IOLoop.instance().start()  # 启动事件循环,阻塞
 
-	logger.info('webserver exit')
+	log.warning('webserver exit')
 
 
 # 启动命令：nohup python3 main.py --port=8194 &
 if __name__ == "__main__":
-	main()
+	bootstrap()

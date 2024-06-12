@@ -7,3 +7,5 @@ SYSTEM_ERR     = 2  # 系统错误[不好定义的错误都用这个返回]
 DB_CONNECT_ERR = 3  # 数据库连接失败
 DB_OPERATE_ERR = 4  # 数据库操作失败
 DATA_NOT_FOUND = 5  # 数据丢失，找不到
+SIGN_FAIL      = 6  # 认证失败
+HTTP_REQ_ERR   = 7  # http请求失败

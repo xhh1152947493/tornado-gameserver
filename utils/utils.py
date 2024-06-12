@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-
+import hashlib
 import json
 import os
+import random
 import time
 import requests
 import urllib.parse
 
-from configs import const
+from defs import const
 from tornado.httpclient import AsyncHTTPClient
+
 
 def make_dir(path):
 	"""创建目录"""
@@ -160,6 +162,33 @@ def cos_upload(url, headers, file_params):
 	except Exception as e:
 		print(e)
 		return "SERVER_ERROR"
+
+
+def sha1(data):
+	return hashlib.sha1(data.encode(encoding='UTF-8')).hexdigest()
+
+
+def md5(data):
+	return hashlib.md5(data.encode(encoding='UTF-8')).hexdigest()
+
+
+def sha256(data):
+	return hashlib.sha256(data.encode(encoding='UTF-8')).hexdigest()
+
+
+_string_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c',
+                'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
+                'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C',
+                'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+                'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+
+
+def random_string(length=32):
+	r_start, r_end = 0, len(_string_list) - 1
+	result = ''
+	for i in range(0, length - 1):
+		result += _string_list[random.randint(r_start, r_end)]
+	return result
 
 
 class ObjectDict(dict):
