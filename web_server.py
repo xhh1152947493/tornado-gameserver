@@ -7,16 +7,18 @@ import tornado.httpserver
 import tornado.web
 
 from configs import config
-from utils.log import log
+from utils.log import Log
 from tornado.options import define, options
 
-from controllers.handle_login import CWxLoginHandler
+from controllers.login import CWxLoginHandler
+from controllers.pay import CWxPayRetPushHandler
 
 
 class Application(tornado.web.Application):
 	def __init__(self):
 		handlers = [
 			("/wxLogin", CWxLoginHandler),
+			("/wxPayRetPush", CWxPayRetPushHandler),
 		]
 
 		settings = dict(
@@ -34,24 +36,24 @@ server = None  # Web Server 实例
 def _signal(*sig):
 	for s in sig:
 		signal.signal(s, sig_handler)
-		log.info('register signal:%s', s)
+		Log.info('register signal:%s', s)
 
 
 def sig_handler(sig, frame):
-	log.warning('caught signal:%s', sig)
+	Log.warning('caught signal:%s', sig)
 	tornado.ioloop.IOLoop.instance().add_callback(shutdown)
 
 
 def shutdown():
-	log.warning('stopping http server')
+	Log.warning('stopping http server')
 	server.stop()  # 拒绝新请求
 
-	log.warning('will shutdown in %s seconds...', config.SHUTDOWN_WAIT_SECONDS)
+	Log.warning('will shutdown in %s seconds...', config.SHUTDOWN_WAIT_SECONDS)
 	io_loop = tornado.ioloop.IOLoop.instance()
 
 	def final_shutdown():
 		io_loop.stop()
-		log.warning('shutdown complete')
+		Log.warning('shutdown complete')
 
 	# 关闭进程前确保剩余消息都执行完了
 	io_loop.call_later(config.SHUTDOWN_WAIT_SECONDS, final_shutdown)
@@ -68,15 +70,15 @@ def bootstrap():
 	server = tornado.httpserver.HTTPServer(Application(), xheaders=True)
 	server.listen(options.port)
 
-	log.info('webserver start on port:%d, is_debug:%s', options.port, config.IS_DEBUG)
+	Log.info('webserver start on port:%d, is_debug:%s', options.port, config.IS_DEBUG)
 
 	_signal(signal.SIGTERM, signal.SIGINT)  # kill -SIGTERM 1234 [kill -9不触发此信号] | ctrl + c
 
 	tornado.ioloop.IOLoop.instance().start()  # 启动事件循环,阻塞
 
-	log.warning('webserver exit')
+	Log.warning('webserver exit')
 
 
-# 启动命令：nohup python3 main.py --port=8194 &
+# 启动命令：nohup python3 web_server.py --port=8194 &
 if __name__ == "__main__":
 	bootstrap()

@@ -1,197 +1,154 @@
 # -*- coding: utf-8 -*-
+
 import hashlib
 import json
 import os
+import sys
 import random
 import time
-import requests
 import urllib.parse
 
-from defs import const
+from data import const
 from tornado.httpclient import AsyncHTTPClient
 
 
-def make_dir(path):
+def MakeDir(sParam):
 	"""创建目录"""
-	return os.makedirs(path, 0o777, True)
+	return os.makedirs(sParam, 0o777, True)
 
 
-def write(content, filename):
+def Write(sContent, sFileName):
 	# 写文件
 	try:
-		f = open(const.ROOT_PATH + filename, 'w')
-		f.write(content)
+		f = open(const.ROOT_PATH + sFileName, 'w')
+		f.write(sContent)
 		f.close()
 	except Exception as data:
 		print(data)
 	return True
 
 
-def log(filename, obj):  # 写日志文件
-	try:
-		f = open(const.ROOT_PATH + filename, 'a')
-		f.write(time_mdh() + str(obj) + "\n")
-		f.close()
-	except Exception as data:
-		print(data)
-	return True
-
-
-def read_json_file(filename):
+def ReadJsonFile(sFileName):
 	"""读json文件，并返回对应的对象，适用于小配置文件的读取"""
 	try:
-		with open(filename, encoding='utf-8') as js_file:
-			obj = json.load(js_file)
+		with open(sFileName, encoding='utf-8') as oFile:
+			obj = json.load(oFile)
 			return obj
 	except Exception as e:
-		print("Failed to read JSON file:", filename, e)
+		from .log import Log
+
+		Log.error(f"read json file failed, file:{sFileName}, err:{e}", sFileName, e)
 		return {}
 
 
-def json_decode(data):
-	# 解析JSON数据，可以解析str或bytes
+def JsonDecode(obj):
+	"""解析JSON数据，可以解析str或bytes"""
 	try:
-		if isinstance(data, bytes):
-			data = data.decode('utf8')
-		py_ret = json.loads(data)
-		return py_ret, None
+		if isinstance(obj, bytes):
+			data = obj.decode('utf8')
+		ret = json.loads(obj)
+		return ret
 	except Exception as err:
-		return None, err
+		from .log import Log
+
+		fr = sys._getframe(1)
+		Log.error(f"decode json failed, {fr.f_code.co_name}:{fr.f_lineno}. data:{obj} err:{err}")
+		return None
 
 
-def json_encode(data):
-	# 从JSON中获取成对象,之所以要把此方法写在这里，请看文件开头的 reload 方法，这样才可以处理utf-8字符
-	return str(json.dumps(data, ensure_ascii=False))
+def JsonEncode(obj):
+	"""从JSON中获取成对象,之所以要把此方法写在这里，请看文件开头的 reload 方法，这样才可以处理utf-8字符"""
+	return str(json.dumps(obj, ensure_ascii=False))
 
 
-def time_mdh():
+def TimeMdh():
 	return time.strftime("%m-%d %X ", time.localtime())
 
 
-def time_format(format_str, time_stamp):
+def TimeFormat(format_str, time_stamp):
 	return time.strftime(format_str, time.localtime(time_stamp))
 
 
-def timestamp():  # 返回时间戳int型
+def Timestamp():  # 返回时间戳int型
 	return int(time.time())
 
 
-def str_to_int(data):
-	# 从字符串转换成INT
-	if not data:
-		return 0
-	try:
-		return int(data)
-	except Exception as data:
-		print(data)
-	return 0
+def Bytes2Str(obj):
+	if isinstance(obj, bytes):
+		return obj.decode('utf-8')
+	return obj
 
 
-def bytes_to_str(data):
-	if isinstance(data, bytes):
-		return data.decode('utf-8')
-	return data
+def HttpGet(sURL, successFunc, failedFunc):
+	"""注意要使用 tornado 启动APP后此函数才有效"""
 
-
-def check_int(data):
-	if not isinstance(data, str):
-		return data
-	if not data.isdigit():
-		return data
-	return int(data)
-
-
-def check_float(data):
-	# 从字符串转换成double
-	if not data:
-		return 0.0
-	try:
-		return float(data)
-	except Exception as data:
-		print(data)
-	return 0.0
-
-
-def http_get(url, success_func, fail_func):
-	# 注意要使用 tornado 启动APP后此函数才有效
-	def handle_request(response):
-		if response.body:
-			success_func(response.body)
+	def _handleRequest(oResp):
+		if oResp.body:
+			successFunc(oResp.body)
 			return
-
-		if response.error:
-			fail_func()
+		if oResp.error:
+			failedFunc()
 		else:
-			success_func(response.body)
+			successFunc(oResp.body)
 
-	http_client = AsyncHTTPClient()
-	params = {'method': 'GET'}
-	http_client.fetch(url, handle_request, **params)
+	dParams = {'method': 'GET'}
+
+	oHttpClient = AsyncHTTPClient()
+	oHttpClient.fetch(sURL, _handleRequest, **dParams)
 
 
-def http_post(url, post_params, success_func, fail_func, body=None):
-	# 注意要使用 tornado 启动APP后此函数才有效
-	def handle_request(response):
-		if response.body:
-			success_func(response.body)
+def HttpPost(sURL, sPostParams, successFunc, failedFunc, oBody=None):
+	"""注意要使用 tornado 启动APP后此函数才有效"""
+
+	def _handleRequest(oResp):
+		if oResp.body:
+			successFunc(oResp.body)
 			return
-
-		if response.error:
-			fail_func()
+		if oResp.error:
+			failedFunc()
 		else:
-			success_func(response.body)
+			successFunc(oResp.body)
 
-	http_client = AsyncHTTPClient()
-	params = {'method': 'POST', 'body': '', 'validate_cert': False}
-	if post_params:
-		params['body'] = urllib.parse.urlencode(post_params)
-	if body:
-		params['body'] = body
-	http_client.fetch(url, handle_request, **params)
+	dParams = {'method': 'POST', 'body': '', 'validate_cert': False}
+	if sPostParams:
+		dParams['body'] = urllib.parse.urlencode(sPostParams)
+	if oBody:
+		dParams['body'] = oBody
 
-
-def cos_upload(url, headers, file_params):
-	""" 使用 requests 库 发送http请求 """
-	try:
-		http_resp = requests.post(url, None, headers=headers, verify=False, files=file_params)
-		status_code = http_resp.status_code
-		if status_code == 200 or status_code == 400:
-			return http_resp.json()
-		else:
-			return "NETWORK_ERROR"
-	except Exception as e:
-		print(e)
-		return "SERVER_ERROR"
+	oHttpClient = AsyncHTTPClient()
+	oHttpClient.fetch(sURL, _handleRequest, **dParams)
 
 
-def sha1(data):
-	return hashlib.sha1(data.encode(encoding='UTF-8')).hexdigest()
+def SHA1(sData):
+	return hashlib.sha1(sData.encode(encoding='UTF-8')).hexdigest()
 
 
-def md5(data):
-	return hashlib.md5(data.encode(encoding='UTF-8')).hexdigest()
+def MD5(sData):
+	return hashlib.md5(sData.encode(encoding='UTF-8')).hexdigest()
 
 
-def sha256(data):
-	return hashlib.sha256(data.encode(encoding='UTF-8')).hexdigest()
+def SHA256(sData):
+	return hashlib.sha256(sData.encode(encoding='UTF-8')).hexdigest()
 
 
-_string_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c',
-                'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
-                'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C',
-                'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-                'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+_stringList = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c',
+               'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
+               'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C',
+               'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+               'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 
-def random_string(length=32):
-	r_start, r_end = 0, len(_string_list) - 1
-	result = ''
-	for i in range(0, length - 1):
-		result += _string_list[random.randint(r_start, r_end)]
-	return result
+def RandomString(iLen):
+	iStart, iEnd = 0, len(_stringList) - 1
+
+	sRet = ''
+	for i in range(0, iLen - 1):
+		sRet += _stringList[random.randint(iStart, iEnd)]
+
+	return sRet
 
 
-class ObjectDict(dict):
+class objectDict(dict):
 	def __getattr__(self, name):
 		try:
 			return self[name]

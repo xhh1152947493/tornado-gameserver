@@ -9,17 +9,20 @@ if __name__ == '__main__':
 	url = "http://localhost:8194/wxLogin"
 
 	params = {
-		"params": utils.json_encode({  # 序列化的json字符串
+		"params": utils.JsonEncode({  # 序列化的json字符串
 			'uid': 1001,
 			'name': "t",
 			'imei': 123456,
 			'mac': 0x12311,
-			'code': "abccc"
+			'errcode': 0,
+			'code': "abccc",
+			'unionid': "123456",
+			'openid': "qwerty",
 		}),
 	}
 
 	s = "params=" + urllib.parse.quote_plus(params["params"]) + "&key=2024CFD4-B5B1-4468-9ACE-60C3C6667B22"
-	params["sign"] = utils.md5(s)
+	params["sign"] = utils.MD5(s)
 
 	response = requests.get(url, params=params)
 
