@@ -10,7 +10,7 @@ from configs import config
 from utils.log import Log
 from tornado.options import define, options
 
-from controllers.login import CWxLoginHandler
+from controllers.login import CWxLoginHandler, CGuestLoginHandler, CAutoTokenLoginHandler
 from controllers.pay import CWxPayRetPushHandler, CWxPayRewardReqHandler, CWxPayOrderQueryHandler, \
 	CWxPayOrderCreateHandler
 
@@ -18,6 +18,8 @@ from controllers.pay import CWxPayRetPushHandler, CWxPayRewardReqHandler, CWxPay
 class Application(tornado.web.Application):
 	def __init__(self):
 		handlers = [
+			("/guestLogin", CGuestLoginHandler),
+			("/autoTokenLogin", CAutoTokenLoginHandler),
 			("/wxLogin", CWxLoginHandler),
 			("/wxPayOrderCreate", CWxPayOrderCreateHandler),
 			("/wxPayRetPush", CWxPayRetPushHandler),

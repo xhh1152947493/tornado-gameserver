@@ -7,9 +7,10 @@ from data import error
 from models import model
 from .base_handler import CBaseHandler
 from utils import utils
+from utils.log import Log
 
 
-class CWxLoginHandler(CBaseHandler):
+class CBaseLoginHandler(CBaseHandler):
 	def prepare(self):
 		if not self.CheckSignNoToken():  # 登录阶段无需token验证http请求合法
 			return self.AnswerClient(error.SIGN_FAIL)
@@ -20,12 +21,82 @@ class CWxLoginHandler(CBaseHandler):
 	def post(self):
 		return self._request()
 
-	def FormatLoginReturn(self, dOnlineInfo, dUserInfo, dAuthInfo):
+	def _request(self):
+		pass
+
+	def FormatLoginReturn(self, dOnlineInfo, dUserInfo, dAuthInfo=None):
 		return self.AnswerClient(error.OK, {
 			"uid": dUserInfo["uid"],
 			"token": dOnlineInfo["token"],  # 用于验证后续http请求
 			"data": dUserInfo["data"],  # 玩家数据
 		})
+
+
+class CAutoTokenLoginHandler(CBaseLoginHandler):
+	"""使用autoToken指定登录"""
+
+	def LoginByAutoToken(self, dParams):
+		sAutoToken = dParams['autoToken']
+
+		dUserInfo = model.GetUserInfoByAutoToken(self.ShareDB(), sAutoToken)
+		if not dUserInfo:  # 没有登录失败
+			return self.AnswerClient(error.DATA_NOT_FOUND)
+
+		# 登录
+		dOnlineInfo = model.RefreshOnline(self.ShareDB(), dUserInfo["uid"])
+		if not dOnlineInfo:
+			return self.AnswerClient(error.DB_OPERATE_ERR)
+
+		Log.info("user auto token login success. uid:{0}".format(dUserInfo["uid"]))
+		return self.FormatLoginReturn(dOnlineInfo, dUserInfo)
+
+	def _request(self):
+		dParams = self.DecodeParams()
+		if not dParams.get('autoToken'):
+			return self.AnswerClient(error.ILLEGAL_PARAMS)
+
+		return self.LoginByAutoToken(dParams)
+
+
+class CGuestLoginHandler(CBaseLoginHandler):
+	"""游客登录"""
+
+	def LoginByIMEI(self, dParams):
+		oConn = self.ShareDB()
+		if not oConn:
+			return self.AnswerClient(error.DB_CONNECT_ERR)
+
+		sIMEI = dParams['imei']
+
+		dUserInfo = model.GetUserInfoByIMEI(self.ShareDB(), sIMEI)
+		if not dUserInfo:  # 创建新角色
+			iUID = model.IncrGID(oConn)
+			if iUID <= 0:
+				return self.AnswerClient(error.DB_OPERATE_ERR)
+			if model.CreateGuestUser(oConn, iUID, dParams) != 1:
+				return self.AnswerClient(error.DB_OPERATE_ERR)
+			dUserInfo = model.GetUserInfoByIMEI(self.ShareDB(), sIMEI)
+			if not dUserInfo:
+				return self.AnswerClient(error.DB_OPERATE_ERR)
+
+		# 登录
+		dOnlineInfo = model.RefreshOnline(oConn, dUserInfo["uid"])
+		if not dOnlineInfo:
+			return self.AnswerClient(error.DB_OPERATE_ERR)
+
+		Log.info("user guest login success. uid:{0}".format(dUserInfo["uid"]))
+		return self.FormatLoginReturn(dOnlineInfo, dUserInfo)
+
+	def _request(self):
+		dParams = self.DecodeParams()
+		if not dParams.get('imei'):
+			return self.AnswerClient(error.ILLEGAL_PARAMS)
+
+		return self.LoginByIMEI(dParams)
+
+
+class CWxLoginHandler(CBaseLoginHandler):
+	"""微信登录"""
 
 	@tornado.web.asynchronous
 	def LoginByCode(self, dParams):
@@ -35,7 +106,7 @@ class CWxLoginHandler(CBaseHandler):
 			options.wechatAppID, options.wechatAppSecret, sCode)
 
 		def successFunc(sRet):
-			dAuthInfo = sRet
+			dAuthInfo = utils.JsonDecode(sRet)
 			if not dAuthInfo or dAuthInfo.get("errcode") != 0:  # 微信验证失败
 				return self.AnswerClient(error.HTTP_REQ_ERR)
 
@@ -55,10 +126,11 @@ class CWxLoginHandler(CBaseHandler):
 					return self.AnswerClient(error.DB_OPERATE_ERR)
 
 			# 登录
-			dOnlineInfo = model.RefreshOnline(oConn, dUserInfo, dAuthInfo)
+			dOnlineInfo = model.RefreshOnline(oConn, dUserInfo["uid"], dAuthInfo.get('session_key', ''))
 			if not dOnlineInfo:
 				return self.AnswerClient(error.DB_OPERATE_ERR)
 
+			Log.info("user wechat login success. uid:{0}".format(dUserInfo["uid"]))
 			return self.FormatLoginReturn(dOnlineInfo, dUserInfo, dAuthInfo)
 
 		def failedFunc():

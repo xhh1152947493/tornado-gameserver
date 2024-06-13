@@ -29,10 +29,40 @@ def GetSignToken(oConn, iUID):
 
 	sSQL = "SELECT `token` FROM `{0}` WHERE uid='{1}' LIMIT 1".format(table_name.TBL_ONLINE, iUID)
 	oRet = TryGet(oConn, sSQL)
-	if not oRet:
+	if not oRet or not oRet["token"]:
 		return ""
 
 	return oRet["token"]
+
+
+def GetUserInfoByAutoToken(oConn, sAutoToken):
+	if not oConn or sAutoToken == "":
+		return None
+
+	sSQL = "SELECT * FROM `{0}` WHERE auto_token='{1}' LIMIT 1".format(table_name.TBL_USER, sAutoToken)
+	return TryGet(oConn, sSQL)
+
+
+def GetUserInfoByIMEI(oConn, sIMEI):
+	if not oConn or sIMEI == "":
+		return None
+
+	sSQL = "SELECT * FROM `{0}` WHERE imei='{1}' LIMIT 1".format(table_name.TBL_USER, sIMEI)
+	return TryGet(oConn, sSQL)
+
+
+def CreateGuestUser(oConn, iUID, dParams):
+	"""创建游客用户"""
+	if not oConn or iUID <= 0 or not dParams:
+		return 0
+
+	dInserts = dict()
+	dInserts['uid'] = iUID
+	dInserts['imei'] = Escape(dParams.get('imei', ""))
+	dInserts['mac'] = Escape(dParams.get('mac', ""))
+	dInserts['auto_token'] = _makeAutoToken(dInserts['imei'])
+
+	return TryExecuteRowcount(oConn, FormatInsert(table_name.TBL_USER, dInserts))
 
 
 def GetUserInfoByUnionID(oConn, sUnionID):
@@ -70,12 +100,12 @@ def _makeAutoToken(sUnionID):
 def CreateWxUser(oConn, iUID, dParams, dAuthInfo):
 	"""创建wx用户"""
 	if not oConn or iUID <= 0 or not dParams or not dAuthInfo:
-		return None
+		return 0
 
 	sUnionID = dAuthInfo.get('unionid')
 	sOpenID = dAuthInfo.get('openid')
 	if not sUnionID or not sOpenID:
-		return None
+		return 0
 
 	dInserts = dict()
 	dInserts['uid'] = iUID
@@ -88,19 +118,15 @@ def CreateWxUser(oConn, iUID, dParams, dAuthInfo):
 	return TryExecuteRowcount(oConn, FormatInsert(table_name.TBL_USER, dInserts))
 
 
-def RefreshOnline(oConn, dUserInfo, dAuthInfo):
+def RefreshOnline(oConn, iUID, sSessionKey=""):
 	"""存在就更新,不存在就插入"""
-	if not oConn or not dUserInfo or not dAuthInfo:
-		return None
-
-	iUID = dUserInfo.get('uid')
-	if not iUID:
+	if not oConn:
 		return None
 
 	dInserts = dict()
 	dInserts['token'] = utils.RandomString(40)
 	dInserts['login_time'] = utils.Timestamp()
-	dInserts['session_key'] = Escape(dAuthInfo.get('session_key', ''))
+	dInserts['session_key'] = Escape(sSessionKey)
 
 	insertList = ["uid='{0}'".format(int(iUID))]
 	updateList = []
@@ -124,7 +150,7 @@ def GetPayEnv(oConn):
 	sSQL = f"SELECT `choice_env` FROM {table_name.TBL_SWITCH} WHERE id=1"
 
 	oRet = TryGet(oConn, sSQL)
-	if not oRet:
+	if not oRet or not oRet['choice_env']:
 		return 0
 
 	return oRet['choice_env']

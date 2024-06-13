@@ -38,6 +38,7 @@ class CWxPayOrderCreateHandler(CBaseHandler):
 		if model.CreatePayOrder(self.ShareDB(), sTradeID, iEnv) != 1:
 			return self.AnswerClient(error.DB_OPERATE_ERR)
 
+		Log.info("create wechat pay order success. uid:{0} tradeID:{1}".format(self.m_uid, sTradeID))
 		return self.AnswerClient(error.OK, {'tradeID': sTradeID, 'uid': self.m_uid, 'env': iEnv})  # 1测试环境 0正式环境
 
 
@@ -150,9 +151,10 @@ class CWxPayRewardReqHandler(CBaseHandler):
 			return self.AnswerClient(error.SIGN_FAIL)
 
 		if model.SetPayOrderRewarded(self.ShareDB(), sTradeID) != 1:
-			Log.error(f"set pay order rewarded failed, trade_id:{sTradeID}")
+			Log.error(f"set pay order rewarded failed, uid:{self.m_uid} trade_id:{sTradeID}")
 			return self.AnswerClient(error.DB_OPERATE_ERR)
 
+		Log.error(f"set pay order rewarded success, uid:{self.m_uid} trade_id:{sTradeID}")
 		return self.AnswerClient(error.OK, {'tradeID': sTradeID, 'uid': self.m_uid})
 
 

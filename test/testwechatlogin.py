@@ -6,22 +6,13 @@ from utils import utils
 if __name__ == '__main__':
 	import requests
 
-	url = "http://localhost:8194/wxLogin"
+	url = "http://localhost:8194/wxPayOrderCreate"
 
 	params = {
-		"params": utils.JsonEncode({  # 序列化的json字符串
-			'uid': 1001,
-			'name': "t",
-			'imei': 123456,
-			'mac': 0x12311,
-			'errcode': 0,
-			'code': "abccc",
-			'unionid': "123456",
-			'openid': "qwerty",
-		}),
+		'uid': "100002"
 	}
 
-	s = "params=" + urllib.parse.quote_plus(params["params"]) + "&key=2024CFD4-B5B1-4468-9ACE-60C3C6667B22"
+	s = "uid=" + urllib.parse.quote_plus(params["uid"]) + "&key=2024CFD4-B5B1-4468-9ACE-60C3C6667B22" + "&token=oXeHPiPb3gIx79oZCpbYEJwUfz65YCTTqYVZcU5"
 	params["sign"] = utils.MD5(s)
 
 	response = requests.get(url, params=params)

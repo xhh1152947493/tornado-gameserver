@@ -70,6 +70,8 @@ class CBaseHandler(tornado.web.RequestHandler):
 	def CheckSign(self):
 		"""验证参数的正确性, 验证请求的合法性"""
 		sToken = model.GetSignToken(self.ShareDB(), int(self.get_argument("uid")))
+		if sToken == "":
+			return False
 		bSignPassed = self._validateSign(self.request.arguments, options.appSignKey, sToken)
 		if bSignPassed:
 			self.SetupFixedParams()
