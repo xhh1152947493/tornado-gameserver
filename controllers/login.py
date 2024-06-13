@@ -23,8 +23,8 @@ class CWxLoginHandler(CBaseHandler):
 	def FormatLoginReturn(self, dOnlineInfo, dUserInfo, dAuthInfo):
 		return self.AnswerClient(error.OK, {
 			"uid": dUserInfo["uid"],
-			"token": dOnlineInfo["token"],
-			"data": dUserInfo["data"],
+			"token": dOnlineInfo["token"],  # 用于验证后续http请求
+			"data": dUserInfo["data"],  # 玩家数据
 		})
 
 	@tornado.web.asynchronous

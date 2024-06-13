@@ -2,30 +2,12 @@
 
 import hashlib
 import json
-import os
 import sys
 import random
 import time
 import urllib.parse
 
-from data import const
 from tornado.httpclient import AsyncHTTPClient
-
-
-def MakeDir(sParam):
-	"""创建目录"""
-	return os.makedirs(sParam, 0o777, True)
-
-
-def Write(sContent, sFileName):
-	# 写文件
-	try:
-		f = open(const.ROOT_PATH + sFileName, 'w')
-		f.write(sContent)
-		f.close()
-	except Exception as data:
-		print(data)
-	return True
 
 
 def ReadJsonFile(sFileName):
@@ -45,7 +27,7 @@ def JsonDecode(obj):
 	"""解析JSON数据，可以解析str或bytes"""
 	try:
 		if isinstance(obj, bytes):
-			data = obj.decode('utf8')
+			obj = obj.decode('utf8')
 		ret = json.loads(obj)
 		return ret
 	except Exception as err:
@@ -82,7 +64,7 @@ def Bytes2Str(obj):
 def HttpGet(sURL, successFunc, failedFunc):
 	"""注意要使用 tornado 启动APP后此函数才有效"""
 
-	def _handleRequest(oResp):
+	def _request(oResp):
 		if oResp.body:
 			successFunc(oResp.body)
 			return
@@ -94,13 +76,13 @@ def HttpGet(sURL, successFunc, failedFunc):
 	dParams = {'method': 'GET'}
 
 	oHttpClient = AsyncHTTPClient()
-	oHttpClient.fetch(sURL, _handleRequest, **dParams)
+	oHttpClient.fetch(sURL, _request, **dParams)
 
 
 def HttpPost(sURL, sPostParams, successFunc, failedFunc, oBody=None):
 	"""注意要使用 tornado 启动APP后此函数才有效"""
 
-	def _handleRequest(oResp):
+	def _request(oResp):
 		if oResp.body:
 			successFunc(oResp.body)
 			return
@@ -116,7 +98,7 @@ def HttpPost(sURL, sPostParams, successFunc, failedFunc, oBody=None):
 		dParams['body'] = oBody
 
 	oHttpClient = AsyncHTTPClient()
-	oHttpClient.fetch(sURL, _handleRequest, **dParams)
+	oHttpClient.fetch(sURL, _request, **dParams)
 
 
 def SHA1(sData):

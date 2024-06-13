@@ -79,19 +79,19 @@ def TryGet(oConn, sSql):
 		return None
 
 
-def TryExecute(oConn, sSql):
+def TryExecute(oConn, sSql) -> int:
 	try:
 		rlt = oConn.execute(sSql)
 		return rlt
 	except Exception as e:
 		Log.error(f"execute sql failed 2, err:{e}\nsql:{sSql}")
-		return None
+		return 0
 
 
-def TryExecuteRowcount(oConn, sSql):
+def TryExecuteRowcount(oConn, sSql) -> int:
 	try:
 		rlt = oConn.execute_rowcount(sSql)
 		return rlt
 	except Exception as e:
 		Log.error(f"execute sql failed 3, err:{e}\nsql:{sSql}")
-		return None
+		return 0

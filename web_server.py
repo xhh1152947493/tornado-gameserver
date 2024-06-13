@@ -11,14 +11,18 @@ from utils.log import Log
 from tornado.options import define, options
 
 from controllers.login import CWxLoginHandler
-from controllers.pay import CWxPayRetPushHandler
+from controllers.pay import CWxPayRetPushHandler, CWxPayRewardReqHandler, CWxPayOrderQueryHandler, \
+	CWxPayOrderCreateHandler
 
 
 class Application(tornado.web.Application):
 	def __init__(self):
 		handlers = [
 			("/wxLogin", CWxLoginHandler),
+			("/wxPayOrderCreate", CWxPayOrderCreateHandler),
 			("/wxPayRetPush", CWxPayRetPushHandler),
+			("/wxPayOrderQuery", CWxPayOrderQueryHandler),
+			("/wxPayRewardReq", CWxPayRewardReqHandler),
 		]
 
 		settings = dict(

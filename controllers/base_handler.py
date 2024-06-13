@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import ipaddress
+
 import urllib.parse
 import tornado
 import tornado.web

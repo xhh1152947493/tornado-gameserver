@@ -115,3 +115,86 @@ def RefreshOnline(oConn, dUserInfo, dAuthInfo):
 		return None
 
 	return dInserts
+
+
+def GetPayEnv(oConn):
+	if not oConn:
+		return 0
+
+	sSQL = f"SELECT `choice_env` FROM {table_name.TBL_SWITCH} WHERE id=1"
+
+	oRet = TryGet(oConn, sSQL)
+	if not oRet:
+		return 0
+
+	return oRet['choice_env']
+
+
+def CreatePayOrder(oConn, sTradeID, iEnv):
+	if not oConn or sTradeID == "":
+		return 0
+
+	dInserts = dict()
+	dInserts['trade_id'] = sTradeID
+	dInserts['create_timestamp'] = utils.Timestamp()
+	dInserts['env'] = iEnv
+	dInserts['state'] = const.PAY_ORDER_STATE_IDLE
+
+	sSQL = FormatInsert(table_name.TBL_ORDER, dInserts)
+
+	return TryExecuteRowcount(oConn, sSQL)
+
+
+def UpdatePayOrderByTradeID(oConn, dInfo):
+	"""支付成功,更新订单数据"""
+	if not oConn or not dInfo:
+		return 0
+
+	sTradeID = dInfo.get('trade_id')
+	if not sTradeID:
+		return 0
+
+	dUpdate = dict()
+	for k, v in dInfo.items():
+		if v is None or v == sTradeID:
+			continue
+		dUpdate[k] = v
+
+	sSQL = FormatUpdate(table_name.TBL_ORDER, dUpdate, f"`trade_id`={sTradeID}")
+
+	return TryExecuteRowcount(oConn, sSQL)
+
+
+def GetUidByTradeID(oConn, sTradeID):
+	if not oConn:
+		return 0
+
+	sSQL = f"SELECT {table_name.TBL_USER}.uid FROM {table_name.TBL_USER} a JOIN {table_name.TBL_ORDER} b ON a.open_id" \
+	       f"=b.open_id WHERE a.trade_id={sTradeID} "
+
+	oRet = TryGet(oConn, sSQL)
+	if not oRet:
+		return 0
+
+	return oRet['uid']
+
+
+def SetPayOrderRewarded(oConn, sTradeID):
+	if not oConn:
+		return 0
+
+	sSQL = "UPDATE `{0}` SET `state`={1} WHERE `state`={2} and `trade_id`={3}".format(table_name.TBL_ORDER,
+	                                                                                  const.PAY_ORDER_STATE_REWARDED,
+	                                                                                  const.PAY_ORDER_STATE_DONE,
+	                                                                                  sTradeID)
+
+	return TryExecuteRowcount(oConn, sSQL)
+
+
+def GetOrderInfoByTradeID(oConn, sTradeID):
+	if not oConn:
+		return None
+
+	sSQL = "SELECT * FROM {0} WHERE `trade_id`={1}".format(table_name.TBL_ORDER, sTradeID)
+
+	return TryGet(oConn, sSQL)
