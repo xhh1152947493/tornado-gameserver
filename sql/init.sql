@@ -4,15 +4,19 @@
  Source Server         : 本地虚拟机
  Source Server Type    : MySQL
  Source Server Version : 50742
- Source Host           : 192.168.22.27:3306
+ Source Host           : 192.168.190.129:3306
  Source Schema         : game
 
  Target Server Type    : MySQL
  Target Server Version : 50742
  File Encoding         : 65001
 
- Date: 14/06/2024 10:59:09
+ Date: 14/06/2024 17:29:36
 */
+
+
+CREATE DATABASE game CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE game;
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
@@ -91,9 +95,9 @@ CREATE TABLE `tbl_user`  (
   `data` blob NULL COMMENT '玩家数据,最大64kb',
   PRIMARY KEY (`uid`, `open_id`, `union_id`) USING BTREE,
   UNIQUE INDEX `uid`(`uid`) USING BTREE,
-  UNIQUE INDEX `auto_token`(`auto_token`) USING BTREE,
   UNIQUE INDEX `open_id`(`open_id`) USING BTREE,
-  UNIQUE INDEX `union_id`(`union_id`) USING BTREE
+  UNIQUE INDEX `union_id`(`union_id`) USING BTREE,
+  UNIQUE INDEX `auto_token`(`auto_token`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 100021 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;

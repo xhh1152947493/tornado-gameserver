@@ -1,13 +1,13 @@
 {
   "is_debug": true,
   "db_sql": {
-    "host": "192.168.22.27:3306",
-    "user": "root",
+    "host": "192.168.190.129:3306",
+    "user": "remote_root",
     "password": "hr@123-zzh",
     "database": "game"
   },
   "db_redis": {
-    "host": "192.168.22.27",
+    "host": "192.168.190.129",
     "port": "6379",
     "db": 0,
     "password": "",

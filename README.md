@@ -35,7 +35,7 @@ _+小驼峰的形式命名。不对外暴露的局部变量以_+小驼峰的形�
 - 启用后一般就能ping通了
 
 
-安装python3.7
+安装Python3.7
 - pyenv是一种管理多个Python版本的优秀工具，特别适合需要在同一系统中切换不同Python版本的场景。
 - 安装pyenv的依赖：
   - sudo apt update
@@ -59,3 +59,44 @@ _+小驼峰的形式命名。不对外暴露的局部变量以_+小驼峰的形�
   - ps：安装完成后在不同的目录使用的就是不同的python版本了
   - 安装完成后在项目目录用：pip install -r requirements.txt命令就可以安装所有的第三方库了
   
+
+安装Mysql 5.7
+ - https://blog.csdn.net/qq233325332/article/details/132339173
+ - sudo apt update
+ - sudo apt install mysql-server-5.7 mysql-client-5.7
+ - 启动MySQL：sudo systemctl start mysql
+ - 设置Mysql root密码：sudo mysql_secure_installation
+   - 不要禁止root用户远程登录，其他都选yes即可
+ - 修改文件：/etc/mysql/mysql.conf.d/mysqld.cnf
+   - bind-address = 0.0.0.0
+ - 创建远程访问用户【这是一个新用户，专门在远程访问的，与本地的root用户不是同一个用户】
+   - CREATE USER 'remote_user'@'%' IDENTIFIED BY 'password';
+ - 为新建的这个远程用户添加所有访问权限
+   - GRANT ALL PRIVILEGES ON *.* TO 'remote_user'@'%' WITH GRANT OPTION;
+ - FLUSH PRIVILEGES;
+ - sudo systemctl restart mysql
+ - 然后在windows上，使用navicat。用remote_user+password登录
+ - 新建查询，执行init.sql，完成数据库的初始化
+
+安装Redis 4.0.9【默认就是这个版本】
+ - sudo apt update
+ - sudo apt install redis-server
+ - sudo systemctl status redis-server
+ - 运行远程访问
+   - vim /etc/redis/redis.conf，修改为 bind 0.0.0.0
+   - sudo systemctl restart redis-server
+
+安装Nginx 1.14.0
+ - sudo apt update
+ - sudo apt install nginx
+ - sudo systemctl status nginx
+ - 把configs目录下的.conf文件修改过去到/etc/nginx/nginx.conf目录
+   - /etc/nginx$ rm -rf nginx.conf
+   - ~/work/tornado_server/configs$ sudo cp nginx.conf /etc/nginx/nginx.conf
+   - ~/work/tornado_server/configs$ sudo cp tornado.conf /etc/nginx/conf.d/tornado.conf
+ - sudo nginx -t
+ - sudo systemctl reload nginx  测试通过后重新加载
+ - sudo systemctl restart nginx 或者重新启动
+
+查看被占用的端口：
+ - netstat -tuln
