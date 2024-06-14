@@ -91,8 +91,14 @@ def bootstrap():
 	Log.warning('webserver exit')
 
 
-# 启动命令：nohup python3 web_server.py --port=8194 &
 if __name__ == "__main__":
+	try:
+		with open(_pidfile, 'r') as f:
+			pid = f.read().strip()
+			if pid != "":  # 不能重复启动进程
+				exit(f"process already running in pid:{pid}")
+	except FileNotFoundError:
+		pass
 	with open(_pidfile, 'w') as f:
 		f.write(str(os.getpid()))
 
