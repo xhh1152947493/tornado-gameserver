@@ -63,7 +63,7 @@ class CWxPayRetPushHandler(CBaseHandler):
 		self.m_msgSignature = self.GetString("msg_signature")
 
 		if not _checkSignature(self.m_signature, self.m_timestamp, self.m_nonce):
-			return self.AnswerWechat()
+			return self.AnswerClient(-1, "check failed")
 
 	def get(self):
 		return self._request()
