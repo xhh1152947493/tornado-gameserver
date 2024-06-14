@@ -6,7 +6,7 @@ from utils import utils
 if __name__ == '__main__':
 	import requests
 
-	url = "http://localhost:8194/wxPayOrderCreate"
+	url = "http://localhost:8194/wxLogin"
 
 	params = {
 		'uid': "100002"

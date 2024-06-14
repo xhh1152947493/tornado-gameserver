@@ -13,6 +13,7 @@ from tornado.options import define, options
 from controllers.login import CWxLoginHandler, CGuestLoginHandler, CAutoTokenLoginHandler
 from controllers.pay import CWxPayRetPushHandler, CWxPayRewardReqHandler, CWxPayOrderQueryHandler, \
 	CWxPayOrderCreateHandler
+from controllers.game import CUploadUserDataHandler
 
 
 class Application(tornado.web.Application):
@@ -25,6 +26,7 @@ class Application(tornado.web.Application):
 			("/wxPayRetPush", CWxPayRetPushHandler),
 			("/wxPayOrderQuery", CWxPayOrderQueryHandler),
 			("/wxPayRewardReq", CWxPayRewardReqHandler),
+			("/uploadUserData", CUploadUserDataHandler),
 		]
 
 		settings = dict(
@@ -46,8 +48,9 @@ def _signal(*sig):
 
 
 def sig_handler(sig, frame):
+	"""立即打断主线程正在执行的逻辑，函数结束后返回继续执行"""
 	Log.warning('caught signal:%s', sig)
-	tornado.ioloop.IOLoop.instance().add_callback(shutdown)
+	tornado.ioloop.IOLoop.instance().add_callback_from_signal(shutdown)
 
 
 def shutdown():

@@ -13,6 +13,7 @@ def Connect(sName):
 		return Connection(**infoDict)
 	except Exception as e:
 		Log.error(f"connect mysql failed, name:{sName}, err:{e}")
+		return None
 
 
 # 防止sql注入攻击

@@ -12,7 +12,9 @@ def Connect(sName):
 		dInfo = config.GetConfigByKey(sName)  # redis的数据
 		return redis.StrictRedis(**dInfo)
 	except Exception as e:
-		print("Please set config of ", sName, e)
+		from utils.log import Log
+		Log.error(f"connect redis failed, name:{sName}, err:{e}")
+		return None
 
 
 def ShareConnect() -> redis.StrictRedis:

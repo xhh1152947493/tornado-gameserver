@@ -5,7 +5,7 @@ import tornado
 import tornado.web
 import sys
 
-from models import database, model
+from models import database, model, base_redis
 from utils import utils
 from utils.log import Log
 from data import error
@@ -17,11 +17,11 @@ class CBaseHandler(tornado.web.RequestHandler):
 		tornado.web.RequestHandler.__init__(self, application, request, **kwargs)
 		self.m_uid = 0
 		self.m_conn = None
+		self.m_redis_conn = None
 
 	# 对象销毁时会自动调用db.close(),这里无需再显示调用了
 	def on_finish(self):
-		if self.m_conn:
-			self.m_conn.close()
+		pass
 
 	def ShareDB(self):
 		if self.m_conn:
@@ -29,7 +29,16 @@ class CBaseHandler(tornado.web.RequestHandler):
 		conn = database.Connect("db_sql")
 		if not conn:
 			return None
-		self.m_conn = conn
+		self.m_conn = conn  # mysql只有一个引用对象,请求结束后会自动销毁close
+		return conn
+
+	def ShareRedis(self):
+		if self.m_redis_conn:
+			return self.m_redis_conn
+		conn = base_redis.ShareConnect()
+		if not conn:
+			return None
+		self.m_redis_conn = conn  # redis有一个全局的引用对象,请求结束后不会自动销毁close
 		return conn
 
 	def CheckFixedParams(self, bWithUID=True):

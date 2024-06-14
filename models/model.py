@@ -39,7 +39,7 @@ def GetUserInfoByAutoToken(oConn, sAutoToken):
 	if not oConn or sAutoToken == "":
 		return None
 
-	sSQL = "SELECT * FROM `{0}` WHERE auto_token='{1}' LIMIT 1".format(table_name.TBL_USER, sAutoToken)
+	sSQL = "SELECT * FROM `{0}` WHERE auto_token='{1}' LIMIT 1".format(table_name.TBL_USER, Escape(sAutoToken))
 	return TryGet(oConn, sSQL)
 
 
@@ -47,7 +47,7 @@ def GetUserInfoByIMEI(oConn, sIMEI):
 	if not oConn or sIMEI == "":
 		return None
 
-	sSQL = "SELECT * FROM `{0}` WHERE imei='{1}' LIMIT 1".format(table_name.TBL_USER, sIMEI)
+	sSQL = "SELECT * FROM `{0}` WHERE imei='{1}' LIMIT 1".format(table_name.TBL_USER, Escape(sIMEI))
 	return TryGet(oConn, sSQL)
 
 
@@ -69,7 +69,7 @@ def GetUserInfoByUnionID(oConn, sUnionID):
 	if not oConn or sUnionID == "":
 		return None
 
-	sSQL = "SELECT * FROM `{0}` WHERE union_id='{1}' LIMIT 1".format(table_name.TBL_USER, sUnionID)
+	sSQL = "SELECT * FROM `{0}` WHERE union_id='{1}' LIMIT 1".format(table_name.TBL_USER, Escape(sUnionID))
 	return TryGet(oConn, sSQL)
 
 
@@ -77,7 +77,7 @@ def GetUserInfoByOpenID(oConn, sOpenID):
 	if not oConn or sOpenID == "":
 		return None
 
-	sSQL = "SELECT * FROM `{0}` WHERE open_id='{1}' LIMIT 1".format(table_name.TBL_USER, sOpenID)
+	sSQL = "SELECT * FROM `{0}` WHERE open_id='{1}' LIMIT 1".format(table_name.TBL_USER, Escape(sOpenID))
 	return TryGet(oConn, sSQL)
 
 
@@ -86,11 +86,11 @@ def GetUserInfoByAuthInfo(oConn, dAuthInfo):
 	if not oConn or not dAuthInfo:
 		return None
 
-	dRet = GetUserInfoByUnionID(oConn, Escape(dAuthInfo.get('unionid')))
+	dRet = GetUserInfoByUnionID(oConn, dAuthInfo.get('unionid'))
 	if dRet:
 		return dRet
 
-	return GetUserInfoByOpenID(oConn, Escape(dAuthInfo.get('openid')))
+	return GetUserInfoByOpenID(oConn, dAuthInfo.get('openid'))
 
 
 def _makeAutoToken(sUnionID):
@@ -161,7 +161,7 @@ def CreatePayOrder(oConn, sTradeID, iEnv):
 		return 0
 
 	dInserts = dict()
-	dInserts['trade_id'] = sTradeID
+	dInserts['trade_id'] = Escape(sTradeID)
 	dInserts['create_timestamp'] = utils.Timestamp()
 	dInserts['env'] = iEnv
 	dInserts['state'] = const.PAY_ORDER_STATE_IDLE
@@ -196,10 +196,10 @@ def GetUidByTradeID(oConn, sTradeID):
 		return 0
 
 	sSQL = f"SELECT {table_name.TBL_USER}.uid FROM {table_name.TBL_USER} a JOIN {table_name.TBL_ORDER} b ON a.open_id" \
-	       f"=b.open_id WHERE a.trade_id={sTradeID} "
+	       f"=b.open_id WHERE a.trade_id={Escape(sTradeID)} "
 
 	oRet = TryGet(oConn, sSQL)
-	if not oRet:
+	if not oRet or not oRet['uid']:
 		return 0
 
 	return oRet['uid']
@@ -212,7 +212,7 @@ def SetPayOrderRewarded(oConn, sTradeID):
 	sSQL = "UPDATE `{0}` SET `state`={1} WHERE `state`={2} and `trade_id`={3}".format(table_name.TBL_ORDER,
 	                                                                                  const.PAY_ORDER_STATE_REWARDED,
 	                                                                                  const.PAY_ORDER_STATE_DONE,
-	                                                                                  sTradeID)
+	                                                                                  Escape(sTradeID))
 
 	return TryExecuteRowcount(oConn, sSQL)
 
@@ -221,6 +221,15 @@ def GetOrderInfoByTradeID(oConn, sTradeID):
 	if not oConn:
 		return None
 
-	sSQL = "SELECT * FROM {0} WHERE `trade_id`={1}".format(table_name.TBL_ORDER, sTradeID)
+	sSQL = "SELECT * FROM {0} WHERE `trade_id`={1}".format(table_name.TBL_ORDER, Escape(sTradeID))
 
 	return TryGet(oConn, sSQL)
+
+
+def UpdateUserGameDataByUID(oConn, iUID, bytesUserData):
+	if not oConn:
+		return 0
+
+	sSQL = "UPDATE `{0}` SET `data`={1} WHERE `uid`={2} LIMIT 1".format(table_name.TBL_USER, bytesUserData, iUID)
+
+	return TryExecuteRowcount(oConn, sSQL)
