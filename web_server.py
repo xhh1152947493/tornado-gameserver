@@ -19,14 +19,14 @@ from controllers.game import CUploadUserDataHandler
 class Application(tornado.web.Application):
 	def __init__(self):
 		handlers = [
-			("/guestLogin", CGuestLoginHandler),
-			("/autoTokenLogin", CAutoTokenLoginHandler),
-			("/wxLogin", CWxLoginHandler),
-			("/wxPayOrderCreate", CWxPayOrderCreateHandler),
-			("/wxPayRetPush", CWxPayRetPushHandler),
-			("/wxPayOrderQuery", CWxPayOrderQueryHandler),
-			("/wxPayRewardReq", CWxPayRewardReqHandler),
-			("/uploadUserData", CUploadUserDataHandler),
+			("/server/guestLogin", CGuestLoginHandler),
+			("/server/autoTokenLogin", CAutoTokenLoginHandler),
+			("/server/wxLogin", CWxLoginHandler),
+			("/server/wxPayOrderCreate", CWxPayOrderCreateHandler),
+			("/server/wxPayRetPush", CWxPayRetPushHandler),
+			("/server/wxPayOrderQuery", CWxPayOrderQueryHandler),
+			("/server/wxPayRewardReq", CWxPayRewardReqHandler),
+			("/server/uploadUserData", CUploadUserDataHandler),
 		]
 
 		settings = dict(
