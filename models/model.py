@@ -5,21 +5,27 @@ from data import const, table_name
 from utils import utils
 
 
-def IncrGID(oConn):
-	"""uid,唯一id生成器"""
+def _inrcCounter(oConn, _id):
 	if not oConn:
 		return 0
 
-	sSQL = "INSERT INTO `{0}` (id, counter_value) VALUES (1, 1) ON DUPLICATE KEY UPDATE counter_value=counter_value+1".format(
-		table_name.TBL_GID)
+	sSQL = "INSERT INTO `{0}` (id, counter_value) VALUES ({1}, 1) ON DUPLICATE KEY UPDATE counter_value=counter_value+1".format(
+		table_name.TBL_COUNTER, _id)
 	if TryExecuteRowcount(oConn, sSQL) <= 0:
 		return 0
 
-	oRet = TryGet(oConn, "SELECT `counter_value` FROM `{0}` WHERE id=1 LIMIT 1".format(table_name.TBL_GID))
+	oRet = TryGet(oConn, "SELECT `counter_value` FROM `{0}` WHERE id={1} LIMIT 1".format(table_name.TBL_COUNTER, _id))
 	if not oRet or oRet.get("counter_value") is None:
 		return 0
 
-	return oRet["counter_value"] + const.INIT_GID
+	return oRet["counter_value"]
+
+
+def IncrGID(oConn):
+	"""uid,唯一id生成器"""
+	iValue = _inrcCounter(oConn, const.COUNTER_ID_FOR_GID)
+
+	return iValue + const.INIT_GID if iValue > 0 else 0
 
 
 def GetSignToken(oConn, iUID):
@@ -147,7 +153,7 @@ def GetPayEnv(oConn):
 	if not oConn:
 		return 0
 
-	sSQL = f"SELECT `choice_env` FROM {table_name.TBL_SWITCH} WHERE id=1"
+	sSQL = f"SELECT `choice_env` FROM {table_name.TBL_SWITCH} LIMIT 1"
 
 	oRet = TryGet(oConn, sSQL)
 	if not oRet or not oRet['choice_env']:
