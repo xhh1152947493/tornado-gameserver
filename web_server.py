@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import signal
+import os
 
 import tornado.ioloop
 import tornado.httpserver
@@ -39,6 +40,7 @@ class Application(tornado.web.Application):
 
 
 server = None  # Web Server 实例
+_pidfile = "./main.pid"
 
 
 def _signal(*sig):
@@ -62,6 +64,7 @@ def shutdown():
 
 	def final_shutdown():
 		io_loop.stop()
+		os.remove(_pidfile)  # 删除PID文件
 		Log.warning('shutdown complete')
 
 	# 关闭进程前确保剩余消息都执行完了
@@ -90,4 +93,7 @@ def bootstrap():
 
 # 启动命令：nohup python3 web_server.py --port=8194 &
 if __name__ == "__main__":
+	with open(_pidfile, 'w') as f:
+		f.write(str(os.getpid()))
+
 	bootstrap()
