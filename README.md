@@ -100,3 +100,10 @@ _+小驼峰的形式命名。不对外暴露的局部变量以_+小驼峰的形�
 
 查看被占用的端口：
  - netstat -tuln
+
+安装Django
+- pip install django
+- 安装mysqlclient
+  - sudo apt-get update
+  - sudo apt-get install python3-dev default-libmysqlclient-dev build-essential
+  - pip install mysqlclient

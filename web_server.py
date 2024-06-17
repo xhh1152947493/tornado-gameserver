@@ -15,6 +15,7 @@ from controllers.login import CWxLoginHandler, CGuestLoginHandler, CAutoTokenLog
 from controllers.pay import CWxPayRetPushHandler, CWxPayRewardReqHandler, CWxPayOrderQueryHandler, \
 	CWxPayOrderCreateHandler
 from controllers.game import CUploadUserDataHandler
+from controllers.code import CReqRedeemCodeHandler
 
 
 class Application(tornado.web.Application):
@@ -28,6 +29,7 @@ class Application(tornado.web.Application):
 			("/server/wxPayOrderQuery", CWxPayOrderQueryHandler),
 			("/server/wxPayRewardReq", CWxPayRewardReqHandler),
 			("/server/uploadUserData", CUploadUserDataHandler),
+			("/server/reqRedeemCode", CReqRedeemCodeHandler),
 		]
 
 		settings = dict(

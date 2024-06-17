@@ -239,3 +239,54 @@ def UpdateUserGameDataByUID(oConn, iUID, bytesUserData):
 	sSQL = "UPDATE `{0}` SET `data`={1} WHERE `uid`={2} LIMIT 1".format(table_name.TBL_USER, bytesUserData, iUID)
 
 	return TryExecuteRowcount(oConn, sSQL)
+
+
+def ValidateRedeemCode(oConn, sCode):
+	if not oConn or not sCode:
+		return False
+
+	sSQL = "SELECT 1 FROM {0} WHERE `code`={1} LIMIT 1".format(table_name.TBL_CODE, Escape(sCode))
+
+	oRet = TryGet(oConn, sSQL)
+	if not oRet or 1 not in oRet:
+		return False
+
+	return True
+
+
+def UpdateRedeemCode(oConn, sCode):
+	if not oConn or not sCode:
+		return 0
+
+	sSQL = FormatUpdate(table_name.TBL_CODE, {
+		'count': 'count+1'
+	}, "`code`={0}".format(Escape(sCode)))
+
+	return TryExecuteRowcount(oConn, sSQL)
+
+
+def ValidateRedeemCodeRewarded(oConn, iUID, sCode):
+	"""表格逐渐增大有隐患,添加索引以提高查询速度,两个字段组合起来成为唯一索引"""
+	if not oConn or not sCode:
+		return False
+
+	sSQL = "SELECT 1 FROM {0} WHERE `uid` = {1} `code`={2} LIMIT 1".format(table_name.TBL_CODE_REWARDED, iUID,
+	                                                                       Escape(sCode))
+
+	oRet = TryGet(oConn, sSQL)
+	if not oRet or 1 not in oRet:  # 记录存在表示已经领取过建立了
+		return True
+
+	return False
+
+
+def InsertRedeemCodeRewardedRecord(oConn, iUID, sCode):
+	if not oConn or not iUID or not sCode:
+		return 0
+
+	sSQL = FormatInsert(table_name.TBL_CODE_REWARDED, {
+		'uid': iUID,
+		'code': Escape(sCode)
+	})
+
+	return TryExecuteRowcount(oConn, sSQL)
