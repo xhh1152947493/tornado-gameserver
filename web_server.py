@@ -29,7 +29,7 @@ class Application(tornado.web.Application):
 			("/server/wxPayOrderQuery", CWxPayOrderQueryHandler),
 			("/server/wxPayRewardReq", CWxPayRewardReqHandler),
 			("/server/uploadUserData", CUploadUserDataHandler),
-			("/server/activeRedeemCode", CActiveRedeemCode),
+			# ("/server/activeRedeemCode", CActiveRedeemCode),
 		]
 
 		settings = dict(
