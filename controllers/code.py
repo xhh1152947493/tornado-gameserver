@@ -6,7 +6,7 @@ from models import model
 from utils.log import Log
 
 
-class CReqRedeemCodeHandler(CBaseHandler):
+class CActiveRedeemCode(CBaseHandler):
 	"""兑换码兑奖,兑换码的添加应该在后台操作"""
 
 	def prepare(self):
@@ -40,5 +40,5 @@ class CReqRedeemCodeHandler(CBaseHandler):
 		if model.UpdateRedeemCode(self.ShareDB(), sCode) != 1:
 			Log.error(f"redeem code insert to code db failed. code:{sCode} uid:{self.m_uid}")
 
-		Log.error(f"redeem code rewarded success. code:{sCode} uid:{self.m_uid}")
+		Log.info(f"redeem code rewarded success. code:{sCode} uid:{self.m_uid}")
 		return self.AnswerClient(error.OK, {'code': sCode, 'uid': self.m_uid})
