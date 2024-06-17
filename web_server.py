@@ -71,7 +71,7 @@ def shutdown():
 	io_loop.call_later(config.SHUTDOWN_WAIT_SECONDS, final_shutdown)
 
 
-define("port", default=8194, help="web server run on the given port", type=int)
+define("port", default=55536, help="web server run on the given port", type=int)
 
 
 def bootstrap():
