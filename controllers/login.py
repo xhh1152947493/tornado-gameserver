@@ -79,6 +79,7 @@ class CGuestLoginHandler(CBaseLoginHandler):
 				return self.AnswerClient(error.DB_OPERATE_ERR)
 			if model.CreateGuestUser(oConn, iUID, dParams) != 1:
 				return self.AnswerClient(error.DB_OPERATE_ERR)
+			Log.info("create new guest user success. uid:{0}".format(iUID))
 			dUserInfo = model.GetUserInfoByIMEI(self.ShareDB(), sIMEI)
 			if not dUserInfo:
 				return self.AnswerClient(error.DB_OPERATE_ERR)
@@ -88,7 +89,7 @@ class CGuestLoginHandler(CBaseLoginHandler):
 		if not dOnlineInfo:
 			return self.AnswerClient(error.DB_OPERATE_ERR)
 
-		Log.info("user guest login success. uid:{0}".format(dUserInfo["uid"]))
+		Log.info("guest user login success. uid:{0}".format(dUserInfo["uid"]))
 		return self.FormatLoginReturn(dOnlineInfo, dUserInfo)
 
 	def _request(self):
