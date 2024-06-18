@@ -90,7 +90,7 @@ class CBaseHandler(tornado.web.RequestHandler):
 		if not nonceList:
 			return False
 		bNonce = nonceList[0]
-		if bNonce in _nonce_record:  # 随机字符串只可以使用一次
+		if len(bNonce) != 16 or bNonce in _nonce_record:  # 随机字符串只可以使用一次
 			return False
 
 		timestampList = dParams.get("timestamp")
