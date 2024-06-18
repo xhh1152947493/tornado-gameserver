@@ -67,6 +67,8 @@ def CreateGuestUser(oConn, iUID, dParams):
 	dInserts['imei'] = Escape(dParams.get('imei', ""))
 	dInserts['mac'] = Escape(dParams.get('mac', ""))
 	dInserts['auto_token'] = _makeAutoToken(dInserts['imei'])
+	dInserts['open_id'] = Escape(utils.RandomString(40))
+	dInserts['union_id'] = Escape(utils.RandomString(40))
 
 	return TryExecuteRowcount(oConn, FormatInsert(table_name.TBL_USER, dInserts))
 

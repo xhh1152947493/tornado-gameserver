@@ -13,6 +13,6 @@
     "password": "",
     "socket_timeout": 5
   },
-  "shutdown_wait": 30
+  "shutdown_wait": 10
 }
 

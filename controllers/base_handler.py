@@ -19,6 +19,16 @@ class CBaseHandler(tornado.web.RequestHandler):
 		self.m_conn = None
 		self.m_redis_conn = None
 
+	def set_default_headers(self):
+		self.set_header('Access-Control-Allow-Origin', '*')
+		self.set_header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+		self.set_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+
+	def options(self):
+		# 处理预检请求
+		self.set_status(204)
+		self.finish()
+
 	# 对象销毁时会自动调用db.close(),这里无需再显示调用了
 	def on_finish(self):
 		pass
@@ -73,8 +83,9 @@ class CBaseHandler(tornado.web.RequestHandler):
 			valuesList.append("token={0}".format(sToken))
 
 		sSignData = "&".join(valuesList)
+		sTrueSign = utils.MD5(sSignData)
 
-		return utils.MD5(sSignData) == sCheckSign
+		return sTrueSign == sCheckSign
 
 	def CheckSign(self):
 		"""验证参数的正确性, 验证请求的合法性"""

@@ -3,6 +3,8 @@
 import tornado.web
 
 from tornado.options import options
+
+import configs.config
 from data import error
 from models import model
 from .base_handler import CBaseHandler
@@ -88,6 +90,9 @@ class CGuestLoginHandler(CBaseLoginHandler):
 		return self.FormatLoginReturn(dOnlineInfo, dUserInfo)
 
 	def _request(self):
+		if not configs.config.IS_DEBUG:  # 正式环境禁止游客登录
+			return self.AnswerClient(error.SYSTEM_ERR)
+
 		dParams = self.DecodeParams()
 		if not dParams.get('imei'):
 			return self.AnswerClient(error.ILLEGAL_PARAMS)
