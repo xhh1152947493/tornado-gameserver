@@ -11,6 +11,22 @@ from utils.log import Log
 from data import error
 from tornado.options import options
 
+_nonce_record = {}
+_max_timelimit = 300
+
+
+def _setNonceRecord(bNonce):
+	"""单线程事件循环"""
+	iNow = utils.Timestamp()
+
+	keyList = list(_nonce_record.keys())
+	for k in keyList:  # 删除过期的nonce，避免内存无限增长
+		if iNow >= _nonce_record[k] + _max_timelimit:
+			del _nonce_record[k]
+
+	# 记录nonce已被使用，避免url被截取重复使用攻击
+	_nonce_record[bNonce] = utils.Timestamp()
+
 
 class CBaseHandler(tornado.web.RequestHandler):
 	def __init__(self, application, request, **kwargs):
@@ -70,6 +86,21 @@ class CBaseHandler(tornado.web.RequestHandler):
 		if not sCheckSign or len(sCheckSign) < 1:
 			return False
 
+		nonceList = dParams.get("nonce")
+		if not nonceList:
+			return False
+		bNonce = nonceList[0]
+		if bNonce in _nonce_record:  # 随机字符串只可以使用一次
+			return False
+
+		timestampList = dParams.get("timestamp")
+		if not timestampList:
+			return False
+		iTimestamp = int(timestampList[0].decode(encoding='UTF-8'))
+		iNow = utils.Timestamp()
+		if iTimestamp > iNow or iTimestamp <= iNow - _max_timelimit:  # 超过这个时间的nonce在内存中已经删除了,通过时间来判断是否有效
+			return False
+
 		valuesList = []
 		for sKey in sorted(list(dParams.keys())):  # 按字典key排序
 			if sKey == "sign":
@@ -85,7 +116,11 @@ class CBaseHandler(tornado.web.RequestHandler):
 		sSignData = "&".join(valuesList)
 		sTrueSign = utils.MD5(sSignData)
 
-		return sTrueSign == sCheckSign
+		bRet = sTrueSign == sCheckSign
+		if bRet:
+			_setNonceRecord(bNonce)
+
+		return bRet
 
 	def CheckSign(self):
 		"""验证参数的正确性, 验证请求的合法性"""
