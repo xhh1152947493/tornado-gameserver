@@ -27,11 +27,13 @@ class CBaseLoginHandler(CBaseHandler):
 		pass
 
 	def FormatLoginReturn(self, dOnlineInfo, dUserInfo, dAuthInfo=None):
-		return self.AnswerClient(error.OK, {
+		dRet = {
 			"uid": dUserInfo["uid"],
 			"token": dOnlineInfo["token"],  # 用于验证后续http请求
 			"data": dUserInfo["data"],  # 玩家数据
-		})
+			"openID": dUserInfo.get("open_id", "")
+		}
+		return self.AnswerClient(error.OK, dRet)
 
 
 class CAutoTokenLoginHandler(CBaseLoginHandler):
