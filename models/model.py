@@ -238,7 +238,8 @@ def UpdateUserGameDataByUID(oConn, iUID, bytesUserData):
 	if not oConn:
 		return 0
 
-	sSQL = "UPDATE `{0}` SET `data`={1} WHERE `uid`={2} LIMIT 1".format(table_name.TBL_USER, bytesUserData, iUID)
+	# 先转成16进制,再用UNHEX把16进制转换成2进制写入
+	sSQL = "UPDATE `{0}` SET `data`=UNHEX('{1}') WHERE `uid`={2} LIMIT 1".format(table_name.TBL_USER, bytesUserData.hex(), iUID)
 
 	return TryExecuteRowcount(oConn, sSQL)
 
