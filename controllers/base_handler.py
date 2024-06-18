@@ -12,7 +12,7 @@ from data import error
 from tornado.options import options
 
 _nonce_record = {}
-_max_timelimit = 300
+_max_timelimit = 120
 
 
 def _setNonceRecord(bNonce):
