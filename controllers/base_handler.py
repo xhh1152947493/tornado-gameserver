@@ -12,20 +12,29 @@ from data import error
 from tornado.options import options
 
 _nonce_record = {}
-_max_timelimit = 120
+_nonce_max_duration = 300
 
 
-def _SetNonceRecord(bNonce):
-	"""单线程事件循环"""
+def _CheckRepeatNonceReq(bNonce, iTimestamp, sToken):
+	"""客户端与服务器的时间不能误差过大,如果客户端修改了本地时间则拒绝请求"""
 	iNow = utils.Timestamp()
 
 	keyList = list(_nonce_record.keys())
-	for k in keyList:  # 删除过期的nonce，避免内存无限增长
-		if iNow >= _nonce_record[k] + _max_timelimit:
-			del _nonce_record[k]
+	for key in keyList:
+		if iNow > _nonce_record[key] + _nonce_max_duration:
+			_nonce_record.pop(key)
 
-	# 记录nonce已被使用，避免url被截取重复使用攻击
-	_nonce_record[bNonce] = utils.Timestamp()
+	if bNonce in _nonce_record:
+		Log.error(f"http reqeust repeat nonce attack!!! nonce:{bNonce} timestamp:{iTimestamp} now:{iNow} token:{sToken}")
+		return False
+
+	# Todo zhangzhihui 如果该报错很多的话,还是让客户端同步时间后在进行游戏把
+	if iTimestamp > iNow + _nonce_max_duration or iTimestamp < iNow - _nonce_max_duration:
+		Log.error(f"http reqeust timestamp   illegal!!! nonce:{bNonce} timestamp:{iTimestamp} now:{iNow} token:{sToken}")
+		return False
+
+	_nonce_record[bNonce] = iTimestamp
+	return True
 
 
 class CBaseHandler(tornado.web.RequestHandler):
@@ -87,18 +96,14 @@ class CBaseHandler(tornado.web.RequestHandler):
 			return False
 
 		nonceList = dParams.get("nonce")
-		if not nonceList:
-			return False
-		bNonce = nonceList[0]
-		if len(bNonce) != 16 or bNonce in _nonce_record:  # 随机字符串只可以使用一次
+		if not nonceList or len(nonceList[0]) != 16:
 			return False
 
 		timestampList = dParams.get("timestamp")
 		if not timestampList:
 			return False
-		iTimestamp = int(timestampList[0].decode(encoding='UTF-8'))
-		iNow = utils.Timestamp()
-		if iTimestamp > iNow or iTimestamp <= iNow - _max_timelimit:  # 超过这个时间的nonce在内存中已经删除了,通过时间来判断是否有效
+
+		if not _CheckRepeatNonceReq(nonceList[0], int(timestampList[0].decode(encoding='UTF-8')), sToken):
 			return False
 
 		valuesList = []
@@ -116,11 +121,7 @@ class CBaseHandler(tornado.web.RequestHandler):
 		sSignData = "&".join(valuesList)
 		sTrueSign = utils.MD5(sSignData)
 
-		bRet = sTrueSign == sCheckSign
-		if bRet:
-			_SetNonceRecord(bNonce)
-
-		return bRet
+		return sTrueSign == sCheckSign
 
 	def CheckSign(self):
 		"""验证参数的正确性, 验证请求的合法性"""

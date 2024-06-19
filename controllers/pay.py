@@ -24,6 +24,11 @@ class CWxPayOrderCreateHandler(CBaseHandler):
 		return self._request()
 
 	def _request(self):
+		dParams = self.DecodeParams()
+		sProductID = dParams.get("productID")
+		if not sProductID:
+			return self.AnswerClient(error.ILLEGAL_PARAMS)
+
 		iTradeID = model.IncrTradeID(self.ShareDB())
 		if iTradeID <= 0:
 			return self.AnswerClient(error.DB_OPERATE_ERR)
@@ -31,7 +36,7 @@ class CWxPayOrderCreateHandler(CBaseHandler):
 		sTradeID = str(iTradeID)
 		iEnv = model.GetPayEnv(self.ShareDB())
 
-		if model.CreatePayOrder(self.ShareDB(), sTradeID, iEnv) != 1:
+		if model.CreatePayOrder(self.ShareDB(), sTradeID, sProductID, iEnv) != 1:
 			return self.AnswerClient(error.DB_OPERATE_ERR)
 
 		Log.info("create wechat pay order success. uid:{0} tradeID:{1}".format(self.m_uid, sTradeID))

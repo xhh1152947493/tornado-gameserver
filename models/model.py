@@ -171,12 +171,13 @@ def GetPayEnv(oConn):
 	return oRet['choice_env']
 
 
-def CreatePayOrder(oConn, sTradeID, iEnv):
+def CreatePayOrder(oConn, sTradeID, sProductID, iEnv):
 	if not oConn or sTradeID == "":
 		return 0
 
 	dInserts = dict()
 	dInserts['trade_id'] = Escape(sTradeID)
+	dInserts['product_id'] = Escape(sProductID)
 	dInserts['create_timestamp'] = utils.Timestamp()
 	dInserts['env'] = iEnv
 	dInserts['state'] = const.PAY_ORDER_STATE_IDLE
