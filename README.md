@@ -110,3 +110,8 @@ _+大驼峰的形式命名。不对外暴露的局部变量以_+大驼峰的形�
   - sudo apt-get update
   - sudo apt-get install python3-dev default-libmysqlclient-dev build-essential
   - pip install mysqlclient
+
+待优化项 Todo zhangzhihui
+- 更新为最新版本的tornado,5.1->6.2 & 装饰器@tornado.web.asynchronous->async def + await
+- 安装tornado-mysql:pip install tornado-mysql
+- 使用async def + await 配合 tornado-mysql 进行异步的数据库操作
