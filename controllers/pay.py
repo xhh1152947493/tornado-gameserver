@@ -8,14 +8,6 @@ from utils.log import Log
 from data import error, const
 
 
-def _MakeOutTradeNo(iUID):
-	"""生成唯一订单号,32个字符以内"""
-	sTradeID = utils.SHA1(str(utils.Timestamp()) + str(iUID) + utils.RandomString(10))
-	if len(sTradeID) > 32:
-		sTradeID = sTradeID[:32]
-	return sTradeID
-
-
 class CWxPayOrderCreateHandler(CBaseHandler):
 	"""客户端请求订单创建,服务器生成唯一订单号"""
 
@@ -32,7 +24,11 @@ class CWxPayOrderCreateHandler(CBaseHandler):
 		return self._request()
 
 	def _request(self):
-		sTradeID = _MakeOutTradeNo(self.m_uid)
+		iTradeID = model.IncrTradeID(self.ShareDB())
+		if iTradeID <= 0:
+			return self.AnswerClient(error.DB_OPERATE_ERR)
+
+		sTradeID = str(iTradeID)
 		iEnv = model.GetPayEnv(self.ShareDB())
 
 		if model.CreatePayOrder(self.ShareDB(), sTradeID, iEnv) != 1:
