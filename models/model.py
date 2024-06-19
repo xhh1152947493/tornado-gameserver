@@ -5,7 +5,7 @@ from data import const, table_name
 from utils import utils
 
 
-def _inrcCounter(oConn, _id):
+def _InrcCounter(oConn, _id):
 	if not oConn:
 		return 0
 
@@ -23,7 +23,7 @@ def _inrcCounter(oConn, _id):
 
 def IncrGID(oConn):
 	"""uid,唯一id生成器"""
-	iValue = _inrcCounter(oConn, const.COUNTER_ID_FOR_GID)
+	iValue = _InrcCounter(oConn, const.COUNTER_ID_FOR_GID)
 
 	return iValue + const.INIT_GID if iValue > 0 else 0
 

@@ -8,7 +8,7 @@ from utils.log import Log
 from data import error, const
 
 
-def _makeOutTradeNo(iUID):
+def _MakeOutTradeNo(iUID):
 	"""生成唯一订单号,32个字符以内"""
 	sTradeID = utils.SHA1(str(utils.Timestamp()) + str(iUID) + utils.RandomString(10))
 	if len(sTradeID) > 32:
@@ -32,7 +32,7 @@ class CWxPayOrderCreateHandler(CBaseHandler):
 		return self._request()
 
 	def _request(self):
-		sTradeID = _makeOutTradeNo(self.m_uid)
+		sTradeID = _MakeOutTradeNo(self.m_uid)
 		iEnv = model.GetPayEnv(self.ShareDB())
 
 		if model.CreatePayOrder(self.ShareDB(), sTradeID, iEnv) != 1:
@@ -42,7 +42,7 @@ class CWxPayOrderCreateHandler(CBaseHandler):
 		return self.AnswerClient(error.OK, {'tradeID': sTradeID, 'uid': self.m_uid, 'env': iEnv})  # 1测试环境 0正式环境
 
 
-def _checkSignature(sSign, sTimestamp, sNoce):
+def _CheckSignature(sSign, sTimestamp, sNoce):
 	tmpList = [options.wechatPayToken, sTimestamp, sNoce]
 	tmpList.sort()
 
@@ -62,7 +62,7 @@ class CWxPayRetPushHandler(CBaseHandler):
 		self.m_nonce = self.GetString("nonce")
 		self.m_msgSignature = self.GetString("msg_signature")
 
-		if not _checkSignature(self.m_signature, self.m_timestamp, self.m_nonce):
+		if not _CheckSignature(self.m_signature, self.m_timestamp, self.m_nonce):
 			return self.AnswerClient(-1, "check failed")
 
 	def get(self):

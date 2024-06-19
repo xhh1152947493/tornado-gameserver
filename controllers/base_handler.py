@@ -15,7 +15,7 @@ _nonce_record = {}
 _max_timelimit = 120
 
 
-def _setNonceRecord(bNonce):
+def _SetNonceRecord(bNonce):
 	"""单线程事件循环"""
 	iNow = utils.Timestamp()
 
@@ -77,7 +77,7 @@ class CBaseHandler(tornado.web.RequestHandler):
 		self.m_uid = self.GetInt('uid') or 0
 
 	@staticmethod
-	def _validateSign(dParams, sSign, sToken=""):
+	def _ValidateSign(dParams, sSign, sToken=""):
 		signObj = dParams.get("sign")
 		if not signObj:
 			return False
@@ -118,7 +118,7 @@ class CBaseHandler(tornado.web.RequestHandler):
 
 		bRet = sTrueSign == sCheckSign
 		if bRet:
-			_setNonceRecord(bNonce)
+			_SetNonceRecord(bNonce)
 
 		return bRet
 
@@ -127,14 +127,14 @@ class CBaseHandler(tornado.web.RequestHandler):
 		sToken = model.GetSignToken(self.ShareDB(), int(self.get_argument("uid")))
 		if sToken == "":
 			return False
-		bSignPassed = self._validateSign(self.request.arguments, options.appSignKey, sToken)
+		bSignPassed = self._ValidateSign(self.request.arguments, options.appSignKey, sToken)
 		if bSignPassed:
 			self.SetupFixedParams()
 		return bSignPassed
 
 	def CheckSignNoToken(self):
 		"""单纯验证参数正确性"""
-		bSignPassed = self._validateSign(self.request.arguments, options.appSignKey)
+		bSignPassed = self._ValidateSign(self.request.arguments, options.appSignKey)
 		if bSignPassed:
 			self.SetupFixedParams()
 		return bSignPassed
