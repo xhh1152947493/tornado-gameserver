@@ -80,7 +80,7 @@ class CWxPayOrderCreateHandler(CBaseHandler):
 		                                    'signature': sSignature})
 
 
-def _CheckSignature(sSign, sTimestamp, sNoce):
+def checkSignature(sSign, sTimestamp, sNoce):
 	tmpList = [options.wechatPayToken, sTimestamp, sNoce]
 	tmpList.sort()
 
@@ -100,7 +100,7 @@ class CWxPayRetPushHandler(CBaseHandler):
 		self.m_nonce = self.GetString("nonce")
 		self.m_msgSignature = self.GetString("msg_signature")
 
-		if not _CheckSignature(self.m_signature, self.m_timestamp, self.m_nonce):
+		if not checkSignature(self.m_signature, self.m_timestamp, self.m_nonce):
 			return self.AnswerClient(-1, "check failed")
 
 	def get(self):
@@ -113,7 +113,7 @@ class CWxPayRetPushHandler(CBaseHandler):
 		self.write({'ErrCode': 0, 'ErrMsg': "Success"})
 		self.finish()
 
-	def _extract(self, dInfo):
+	def extract(self, dInfo):
 		"""提取需要的数据"""
 		dRet = dict()
 
@@ -153,7 +153,7 @@ class CWxPayRetPushHandler(CBaseHandler):
 		if iRet != wx_crypt.WXBizMsgCrypt_OK:
 			return self.AnswerClient(-1, "check failed")
 
-		dRet = self._extract(dDecryptJson)
+		dRet = self.extract(dDecryptJson)
 		dRet['state'] = const.PAY_ORDER_STATE_DONE  # 设置为已支付状态
 
 		if model.UpdatePayOrderByTradeID(self.ShareDB(), dRet) > 0:

@@ -5,7 +5,7 @@ from data import const, table_name
 from utils import utils
 
 
-def _IncrCounter(oConn, _id):
+def incrCounter(oConn, _id):
 	if not oConn:
 		return 0
 
@@ -23,14 +23,14 @@ def _IncrCounter(oConn, _id):
 
 def IncrGID(oConn):
 	"""uid,唯一id生成器"""
-	iValue = _IncrCounter(oConn, const.COUNTER_ID_FOR_GID)
+	iValue = incrCounter(oConn, const.COUNTER_ID_FOR_GID)
 
 	return iValue + const.INIT_GID if iValue > 0 else 0
 
 
 def IncrTradeID(oConn):
 	"""tradeID,唯一id生成器"""
-	iValue = _IncrCounter(oConn, const.COUNTER_ID_FOR_TRADE_ID)
+	iValue = incrCounter(oConn, const.COUNTER_ID_FOR_TRADE_ID)
 
 	return iValue + const.INIT_TRADE_ID if iValue > 0 else 0
 
@@ -73,7 +73,7 @@ def CreateGuestUser(oConn, uid, dParams):
 	dInserts['uid'] = uid
 	dInserts['imei'] = Escape(dParams.get('imei', ""))
 	dInserts['mac'] = Escape(dParams.get('mac', ""))
-	dInserts['auto_token'] = _makeAutoToken(dInserts['imei'])
+	dInserts['auto_token'] = makeAutoToken(dInserts['imei'])
 	dInserts['open_id'] = Escape(utils.RandomString(40))
 	dInserts['union_id'] = Escape(utils.RandomString(40))
 
@@ -108,7 +108,7 @@ def GetUserInfoByAuthInfo(oConn, dAuthInfo):
 	return GetUserInfoByOpenID(oConn, dAuthInfo.get('openid'))
 
 
-def _makeAutoToken(sUnionID):
+def makeAutoToken(sUnionID):
 	return utils.SHA1(sUnionID + utils.RandomString(20))
 
 
@@ -128,7 +128,7 @@ def CreateWxUser(oConn, uid, dParams, dAuthInfo):
 	dInserts['mac'] = Escape(dParams.get('mac', ""))
 	dInserts['union_id'] = Escape(sUnionID)
 	dInserts['open_id'] = Escape(sOpenID)
-	dInserts['auto_token'] = _makeAutoToken(sUnionID)
+	dInserts['auto_token'] = makeAutoToken(sUnionID)
 
 	return TryExecuteRowcount(oConn, FormatInsert(table_name.TBL_USER, dInserts))
 

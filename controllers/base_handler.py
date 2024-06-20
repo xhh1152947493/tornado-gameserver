@@ -15,7 +15,7 @@ _nonce_record = {}
 _nonce_max_duration = 300
 
 
-def _CheckRepeatNonceReq(bNonce, iTimestamp, sToken):
+def checkRepeatNonceReq(bNonce, iTimestamp, sToken):
 	"""客户端与服务器的时间不能误差过大,如果客户端修改了本地时间则拒绝请求"""
 	iNow = utils.Timestamp()
 
@@ -86,7 +86,7 @@ class CBaseHandler(tornado.web.RequestHandler):
 		self.m_uid = self.GetInt('uid') or 0
 
 	@staticmethod
-	def _ValidateSign(dParams, sSign, sToken=""):
+	def validateSign(dParams, sSign, sToken=""):
 		signObj = dParams.get("sign")
 		if not signObj:
 			return False
@@ -103,7 +103,7 @@ class CBaseHandler(tornado.web.RequestHandler):
 		if not timestampList:
 			return False
 
-		if not _CheckRepeatNonceReq(nonceList[0], int(timestampList[0].decode(encoding='UTF-8')), sToken):
+		if not checkRepeatNonceReq(nonceList[0], int(timestampList[0].decode(encoding='UTF-8')), sToken):
 			return False
 
 		valuesList = []
@@ -128,14 +128,14 @@ class CBaseHandler(tornado.web.RequestHandler):
 		sToken = model.GetSignToken(self.ShareDB(), int(self.get_argument("uid")))
 		if sToken == "":
 			return False
-		bSignPassed = self._ValidateSign(self.request.arguments, options.appSignKey, sToken)
+		bSignPassed = self.validateSign(self.request.arguments, options.appSignKey, sToken)
 		if bSignPassed:
 			self.SetupFixedParams()
 		return bSignPassed
 
 	def CheckSignNoToken(self):
 		"""单纯验证参数正确性"""
-		bSignPassed = self._ValidateSign(self.request.arguments, options.appSignKey)
+		bSignPassed = self.validateSign(self.request.arguments, options.appSignKey)
 		if bSignPassed:
 			self.SetupFixedParams()
 		return bSignPassed
