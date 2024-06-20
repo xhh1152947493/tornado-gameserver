@@ -74,12 +74,12 @@ class CGuestLoginHandler(CBaseLoginHandler):
 
 		dUserInfo = model.GetUserInfoByIMEI(self.ShareDB(), sIMEI)
 		if not dUserInfo:  # 创建新角色
-			iUID = model.IncrGID(oConn)
-			if iUID <= 0:
+			uid = model.IncrGID(oConn)
+			if uid <= 0:
 				return self.AnswerClient(error.DB_OPERATE_ERR)
-			if model.CreateGuestUser(oConn, iUID, dParams) != 1:
+			if model.CreateGuestUser(oConn, uid, dParams) != 1:
 				return self.AnswerClient(error.DB_OPERATE_ERR)
-			Log.info("create new guest user success. uid:{0}".format(iUID))
+			Log.info("create new guest user success. uid:{0}".format(uid))
 			dUserInfo = model.GetUserInfoByIMEI(self.ShareDB(), sIMEI)
 			if not dUserInfo:
 				return self.AnswerClient(error.DB_OPERATE_ERR)
@@ -124,10 +124,10 @@ class CWxLoginHandler(CBaseLoginHandler):
 
 			dUserInfo = model.GetUserInfoByAuthInfo(oConn, dAuthInfo)
 			if not dUserInfo:  # 创建新角色
-				iUID = model.IncrGID(oConn)
-				if iUID <= 0:
+				uid = model.IncrGID(oConn)
+				if uid <= 0:
 					return self.AnswerClient(error.DB_OPERATE_ERR)
-				if model.CreateWxUser(oConn, iUID, dParams, dAuthInfo) != 1:
+				if model.CreateWxUser(oConn, uid, dParams, dAuthInfo) != 1:
 					return self.AnswerClient(error.DB_OPERATE_ERR)
 				dUserInfo = model.GetUserInfoByAuthInfo(oConn, dAuthInfo)  # 再次获取数据,此时肯定能获取到
 				if not dUserInfo:

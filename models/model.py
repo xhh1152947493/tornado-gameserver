@@ -35,12 +35,12 @@ def IncrTradeID(oConn):
 	return iValue + const.INIT_TRADE_ID if iValue > 0 else 0
 
 
-def GetSignToken(oConn, iUID):
+def GetSignToken(oConn, uid):
 	"""从online表获取token,检查请求的合法性"""
 	if not oConn:
 		return ""
 
-	sSQL = "SELECT `token` FROM `{0}` WHERE uid='{1}' LIMIT 1".format(table_name.TBL_ONLINE, iUID)
+	sSQL = "SELECT `token` FROM `{0}` WHERE uid='{1}' LIMIT 1".format(table_name.TBL_ONLINE, uid)
 	oRet = TryGet(oConn, sSQL)
 	if not oRet or not oRet["token"]:
 		return ""
@@ -64,13 +64,13 @@ def GetUserInfoByIMEI(oConn, sIMEI):
 	return TryGet(oConn, sSQL)
 
 
-def CreateGuestUser(oConn, iUID, dParams):
+def CreateGuestUser(oConn, uid, dParams):
 	"""创建游客用户"""
-	if not oConn or iUID <= 0 or not dParams:
+	if not oConn or uid <= 0 or not dParams:
 		return 0
 
 	dInserts = dict()
-	dInserts['uid'] = iUID
+	dInserts['uid'] = uid
 	dInserts['imei'] = Escape(dParams.get('imei', ""))
 	dInserts['mac'] = Escape(dParams.get('mac', ""))
 	dInserts['auto_token'] = _makeAutoToken(dInserts['imei'])
@@ -112,9 +112,9 @@ def _makeAutoToken(sUnionID):
 	return utils.SHA1(sUnionID + utils.RandomString(20))
 
 
-def CreateWxUser(oConn, iUID, dParams, dAuthInfo):
+def CreateWxUser(oConn, uid, dParams, dAuthInfo):
 	"""创建wx用户"""
-	if not oConn or iUID <= 0 or not dParams or not dAuthInfo:
+	if not oConn or uid <= 0 or not dParams or not dAuthInfo:
 		return 0
 
 	sUnionID = dAuthInfo.get('unionid')
@@ -123,7 +123,7 @@ def CreateWxUser(oConn, iUID, dParams, dAuthInfo):
 		return 0
 
 	dInserts = dict()
-	dInserts['uid'] = iUID
+	dInserts['uid'] = uid
 	dInserts['imei'] = Escape(dParams.get('imei', ""))
 	dInserts['mac'] = Escape(dParams.get('mac', ""))
 	dInserts['union_id'] = Escape(sUnionID)
@@ -133,7 +133,7 @@ def CreateWxUser(oConn, iUID, dParams, dAuthInfo):
 	return TryExecuteRowcount(oConn, FormatInsert(table_name.TBL_USER, dInserts))
 
 
-def RefreshOnline(oConn, iUID, sSessionKey=""):
+def RefreshOnline(oConn, uid, sSessionKey=""):
 	"""存在就更新,不存在就插入"""
 	if not oConn:
 		return None
@@ -143,7 +143,7 @@ def RefreshOnline(oConn, iUID, sSessionKey=""):
 	dInserts['login_time'] = utils.Timestamp()
 	dInserts['session_key'] = Escape(sSessionKey)
 
-	insertList = ["uid='{0}'".format(int(iUID))]
+	insertList = ["uid='{0}'".format(int(uid))]
 	updateList = []
 	for k, v in dInserts.items():
 		insertList.append("{0}='{1}'".format(k, v))
@@ -171,15 +171,28 @@ def GetPayEnv(oConn):
 	return oRet['choice_env']
 
 
-def CreatePayOrder(oConn, sTradeID, sProductID, iEnv):
-	if not oConn or sTradeID == "":
+def GetSessionKeyByUID(oConn, uid):
+	if not oConn:
+		return ""
+
+	sSQL = f"SELECT `session_key` FROM {table_name.TBL_ONLINE} WHERE `uid`={uid} LIMIT 1 "
+
+	oRet = TryGet(oConn, sSQL)
+	if not oRet or not oRet['session_key']:
+		return ""
+
+	return oRet['session_key']
+
+
+def CreatePayOrder(oConn, dBody):
+	if not oConn or not dBody:
 		return 0
 
 	dInserts = dict()
-	dInserts['trade_id'] = Escape(sTradeID)
-	dInserts['product_id'] = Escape(sProductID)
+	dInserts['trade_id'] = Escape(dBody.get("tradeID", ''))
+	dInserts['product_id'] = Escape(dBody.get("productID", ''))
 	dInserts['create_timestamp'] = utils.Timestamp()
-	dInserts['env'] = iEnv
+	dInserts['env'] = Escape(dBody.get("env", ''))
 	dInserts['state'] = const.PAY_ORDER_STATE_IDLE
 
 	sSQL = FormatInsert(table_name.TBL_ORDER, dInserts)
@@ -242,13 +255,13 @@ def GetOrderInfoByTradeID(oConn, sTradeID):
 	return TryGet(oConn, sSQL)
 
 
-def UpdateUserGameDataByUID(oConn, iUID, bytesUserData):
+def UpdateUserGameDataByUID(oConn, uid, bytesUserData):
 	if not oConn:
 		return 0
 
 	# 先转成16进制,再用UNHEX把16进制转换成2进制写入
 	sSQL = "UPDATE `{0}` SET `data`=UNHEX('{1}') WHERE `uid`={2} LIMIT 1".format(table_name.TBL_USER,
-	                                                                             bytesUserData.hex(), iUID)
+	                                                                             bytesUserData.hex(), uid)
 
 	return TryExecuteRowcount(oConn, sSQL)
 
@@ -277,12 +290,12 @@ def UpdateRedeemCode(oConn, sCode):
 	return TryExecuteRowcount(oConn, sSQL)
 
 
-def ValidateRedeemCodeRewarded(oConn, iUID, sCode):
+def ValidateRedeemCodeRewarded(oConn, uid, sCode):
 	"""表格逐渐增大有隐患,添加索引以提高查询速度,两个字段组合起来成为唯一索引"""
 	if not oConn or not sCode:
 		return False
 
-	sSQL = "SELECT 1 FROM {0} WHERE `uid` = {1} `code`={2} LIMIT 1".format(table_name.TBL_CODE_REWARDED, iUID,
+	sSQL = "SELECT 1 FROM {0} WHERE `uid` = {1} `code`={2} LIMIT 1".format(table_name.TBL_CODE_REWARDED, uid,
 	                                                                       Escape(sCode))
 
 	oRet = TryGet(oConn, sSQL)
@@ -292,12 +305,12 @@ def ValidateRedeemCodeRewarded(oConn, iUID, sCode):
 	return False
 
 
-def InsertRedeemCodeRewardedRecord(oConn, iUID, sCode):
-	if not oConn or not iUID or not sCode:
+def InsertRedeemCodeRewardedRecord(oConn, uid, sCode):
+	if not oConn or not uid or not sCode:
 		return 0
 
 	sSQL = FormatInsert(table_name.TBL_CODE_REWARDED, {
-		'uid': iUID,
+		'uid': uid,
 		'code': Escape(sCode)
 	})
 

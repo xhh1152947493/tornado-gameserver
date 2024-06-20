@@ -1,11 +1,44 @@
 # -*- coding: utf-8 -*-
 
+import hmac
+import hashlib
+
 from tornado.options import options
 from models import model
 from .base_handler import CBaseHandler
 from utils import utils, wx_crypt
 from utils.log import Log
 from data import error, const
+
+
+def calc_pay_sig(uri, post_body, appkey):
+	""" pay_sig签名算法
+	  Args:
+		  uri       - 当前请求的支付API的uri部分，不带query_string
+					  例如：/wxa/game/getbalance、/wxa/game/pay
+		  post_body - http POST的数据包体
+		  appkey    - 对应环境的AppKey
+	  Returns:
+		  支付请求签名pay_sig
+	"""
+	need_sign_msg = uri + '&' + post_body
+	pay_sig = hmac.new(key=appkey.encode('utf-8'), msg=need_sign_msg.encode('utf-8'),
+	                   digestmod=hashlib.sha256).hexdigest()
+	return pay_sig
+
+
+def calc_signature(post_body, session_key):
+	""" 用户登录态signature签名算法
+	  Args:
+		  post_body   - http POST的数据包体
+		  session_key - 当前用户有效的session_key，参考auth.code2Session接口
+	  Returns:
+		  用户登录态签名signature
+	"""
+	need_sign_msg = post_body
+	signature = hmac.new(key=session_key.encode('utf-8'), msg=need_sign_msg.encode('utf-8'),
+	                     digestmod=hashlib.sha256).hexdigest()
+	return signature
 
 
 class CWxPayOrderCreateHandler(CBaseHandler):
@@ -24,23 +57,27 @@ class CWxPayOrderCreateHandler(CBaseHandler):
 		return self._request()
 
 	def _request(self):
-		dParams = self.DecodeParams()
-		sProductID = dParams.get("productID")
-		if not sProductID:
+		dBody = utils.JsonDecode(self.request.body)
+		if not dBody:
+			return self.AnswerClient(error.ILLEGAL_PARAMS)
+		if not dBody or not dBody.get("tradeID") or dBody.get("tradeID") == "" or not dBody.get(
+				"productID") or dBody.get("productID") == "":
 			return self.AnswerClient(error.ILLEGAL_PARAMS)
 
-		iTradeID = model.IncrTradeID(self.ShareDB())
-		if iTradeID <= 0:
+		sSessionKey = model.GetSessionKeyByUID(self.ShareDB(), self.m_uid)
+		if not sSessionKey:
 			return self.AnswerClient(error.DB_OPERATE_ERR)
 
-		sTradeID = str(iTradeID)
-		iEnv = model.GetPayEnv(self.ShareDB())
+		sPaySign = calc_pay_sig(self.request.uri, self.request.body, options.wechatAppID)
+		sSignature = calc_signature(self.request.body, sSessionKey)
 
-		if model.CreatePayOrder(self.ShareDB(), sTradeID, sProductID, iEnv) != 1:
+		if model.CreatePayOrder(self.ShareDB(), dBody) != 1:
 			return self.AnswerClient(error.DB_OPERATE_ERR)
 
-		Log.info("create wechat pay order success. uid:{0} tradeID:{1}".format(self.m_uid, sTradeID))
-		return self.AnswerClient(error.OK, {'tradeID': sTradeID, 'uid': self.m_uid, 'env': iEnv})  # 1测试环境 0正式环境
+		Log.info("create wechat pay order success. uid:{0} tradeID:{1}".format(self.m_uid, dBody.get("tradeID", '')))
+
+		return self.AnswerClient(error.OK, {'tradeID': dBody.get("tradeID", ''), 'uid': self.m_uid, 'paySign': sPaySign,
+		                                    'signature': sSignature})
 
 
 def _CheckSignature(sSign, sTimestamp, sNoce):

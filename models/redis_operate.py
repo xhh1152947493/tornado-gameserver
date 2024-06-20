@@ -5,11 +5,11 @@ def KeysUserGameData():
 	return "user_game_data"
 
 
-def UpdateUserGameData(oRedisConn, iUID, bytesUserData):
-	if not oRedisConn or iUID <= 0 or len(bytesUserData) == 0:
+def UpdateUserGameData(oRedisConn, uid, bytesUserData):
+	if not oRedisConn or uid <= 0 or len(bytesUserData) == 0:
 		return False
 
-	return oRedisConn.hset(KeysUserGameData(), iUID, bytesUserData) > 0
+	return oRedisConn.hset(KeysUserGameData(), uid, bytesUserData) > 0
 
 
 def GetUpdatedUserList(oRedisConn):
@@ -19,18 +19,18 @@ def GetUpdatedUserList(oRedisConn):
 	return oRedisConn.hkeys(KeysUserGameData())
 
 
-def DelUserGameData(oRedisConn, iUID):
+def DelUserGameData(oRedisConn, uid):
 	if not oRedisConn:
 		return False
 
-	return oRedisConn.hdel(KeysUserGameData(), iUID) > 0
+	return oRedisConn.hdel(KeysUserGameData(), uid) > 0
 
 
-def GetUserGameData(oRedisConn, iUID):
+def GetUserGameData(oRedisConn, uid):
 	if not oRedisConn:
 		return b''
 
-	return oRedisConn.hget(KeysUserGameData(), iUID)
+	return oRedisConn.hget(KeysUserGameData(), uid)
 
 
 def UpdateUserGameData2Mysql(oRedisConn):
@@ -43,11 +43,11 @@ def UpdateUserGameData2Mysql(oRedisConn):
 		return
 
 	uidList = GetUpdatedUserList(oRedisConn)
-	for iUID in uidList:
-		bytesUserData = GetUserGameData(oRedisConn, iUID)
+	for uid in uidList:
+		bytesUserData = GetUserGameData(oRedisConn, uid)
 		if len(bytesUserData) == 0:
 			continue
-		if model.UpdateUserGameDataByUID(oSqlConn, iUID, bytesUserData) == 0:
+		if model.UpdateUserGameDataByUID(oSqlConn, uid, bytesUserData) == 0:
 			continue
 
-		DelUserGameData(oRedisConn, iUID)
+		DelUserGameData(oRedisConn, uid)
