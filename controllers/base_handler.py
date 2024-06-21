@@ -25,12 +25,13 @@ def checkRepeatNonceReq(bNonce, iTimestamp, sToken):
 			_nonce_record.pop(key)
 
 	if bNonce in _nonce_record:
-		Log.error(f"http reqeust repeat nonce attack!!! nonce:{bNonce} timestamp:{iTimestamp} now:{iNow} token:{sToken}")
+		Log.error(
+			f"http reqeust repeat nonce attack!!! nonce:{bNonce} timestamp:{iTimestamp} now:{iNow} token:{sToken}")
 		return False
 
-	# Todo zhangzhihui 如果该报错很多的话,还是让客户端同步时间后在进行游戏把
-	if iTimestamp > iNow + _nonce_max_duration or iTimestamp < iNow - _nonce_max_duration:
-		Log.error(f"http reqeust timestamp   illegal!!! nonce:{bNonce} timestamp:{iTimestamp} now:{iNow} token:{sToken}")
+	if abs(iNow - iTimestamp) > _nonce_max_duration:
+		Log.error(
+			f"http reqeust timestamp   illegal!!! nonce:{bNonce} timestamp:{iTimestamp} now:{iNow} token:{sToken}")
 		return False
 
 	_nonce_record[bNonce] = iTimestamp
@@ -95,17 +96,6 @@ class CBaseHandler(tornado.web.RequestHandler):
 		if not sCheckSign or len(sCheckSign) < 1:
 			return False
 
-		nonceList = dParams.get("nonce")
-		if not nonceList or len(nonceList[0]) != 16:
-			return False
-
-		timestampList = dParams.get("timestamp")
-		if not timestampList:
-			return False
-
-		if not checkRepeatNonceReq(nonceList[0], int(timestampList[0].decode(encoding='UTF-8')), sToken):
-			return False
-
 		valuesList = []
 		for sKey in sorted(list(dParams.keys())):  # 按字典key排序
 			if sKey == "sign":
@@ -121,7 +111,20 @@ class CBaseHandler(tornado.web.RequestHandler):
 		sSignData = "&".join(valuesList)
 		sTrueSign = utils.MD5(sSignData)
 
-		return sTrueSign == sCheckSign
+		bRet = sTrueSign == sCheckSign
+		if bRet:  # 验证通过再检查是否重放攻击
+			nonceList = dParams.get("nonce")
+			if not nonceList or len(nonceList[0]) != 16:
+				return False
+
+			timestampList = dParams.get("timestamp")
+			if not timestampList:
+				return False
+
+			if not checkRepeatNonceReq(nonceList[0], int(timestampList[0].decode(encoding='UTF-8')), sToken):
+				return False
+
+		return bRet
 
 	def CheckSign(self):
 		"""验证参数的正确性, 验证请求的合法性"""
