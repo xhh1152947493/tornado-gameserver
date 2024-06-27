@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import json
+import time
 import urllib.parse
 
 from utils import utils
@@ -6,20 +8,18 @@ from utils import utils
 if __name__ == '__main__':
 	import requests
 
-	url = "http://192.168.190.129:80/server/wxLogin"
+	for i in range(10):
+		params = json.dumps({
+			'code':"12321321",
+		})
 
-	params = {
-		'uid': "100002"
-	}
+		url = f"http://127.0.0.1:8194/server/WxPayOrderPush?params={params}&sign=65005ba49d76c6fc15d51d24b101df3c&nonce=432423adsa&timestamp=1718963302"
 
-	s = "uid=" + urllib.parse.quote_plus(params["uid"]) + "&key=2024CFD4-B5B1-4468-9ACE-60C3C6667B22" + "&token=oXeHPiPb3gIx79oZCpbYEJwUfz65YCTTqYVZcU5"
-	params["sign"] = utils.MD5(s)
+		response = requests.post(url)
 
-	response = requests.get(url, params=params)
-
-	# 检查响应状态码
-	if response.status_code == 200:
-		print("请求成功！")
-		print("响应内容：", response.text)
-	else:
-		print("请求失败，状态码：", response.status_code)
+		# 检查响应状态码
+		if response.status_code == 200:
+			print("请求成功！")
+			print("响应内容：", response.text)
+		else:
+			print("请求失败，状态码：", response.status_code)

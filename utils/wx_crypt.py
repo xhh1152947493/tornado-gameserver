@@ -172,23 +172,16 @@ class Prpcrypt(object):
 		"""
 		try:
 			cryptor = AES.new(self.key, self.mode, self.key[:16])
-			# 使用BASE64对密文进行解码，然后AES-CBC解密
 			plain_text = cryptor.decrypt(base64.b64decode(text.encode()))
 		except Exception as e:
-			# print (e)
 			return WXBizMsgCrypt_DecryptAES_Error, None
 		try:
 			pad = plain_text[-1]
-			# 去掉补位字符串
-			# pkcs7 = PKCS7Encoder()
-			# plain_text = pkcs7.encode(plain_text)
-			# 去除16位随机字符串
 			content = plain_text[16:-pad]
 			json_len = socket.ntohl(struct.unpack("I", content[: 4])[0])
 			json_content = content[4: json_len + 4].decode()
 			from_appid = content[json_len + 4:].decode()
 		except Exception as e:
-			print(e)
 			return WXBizMsgCrypt_IllegalBuffer, None
 		if from_appid != appid:
 			return WXBizMsgCrypt_ValidateAppid_Error, None
